@@ -12,4 +12,16 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  vite: {
+    preview: {
+      host: '0.0.0.0',
+      port: process.env.PORT ? parseInt(process.env.PORT) : 4173,
+      strictPort: false,
+      allowedHosts: [
+        'ghostbus-frontend.onrender.com',
+        '.onrender.com',
+        'localhost',
+      ],
+    },
+  },
 });
