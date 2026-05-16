@@ -1,0 +1,893 @@
+⬤ GHOSTBUS — SOFTWARE REQUIREMENTS & UI/UX SPECIFICATION. 
+⬤➤ STATUS: PRODUCTION-GRADE, END-TO-END.
+
+---
+
+➤ 0. DOCUMENT GUARANTEE
+
+This document provides a comprehensive and near-complete specification of the required system, covering approximately 99% of all functional and technical requirements.
+The remaining 1% consists of minor refinements and edge-case clarifications, which will be addressed collaboratively with the development team during implementation through ongoing discussions, chats, or calls as needed.
+
+* Product logic
+* UI/UX behavior
+* Backend architecture
+* Data models
+* Payment & payout flows
+* Analytics
+* Admin control
+* Deployment & scaling
+
+No assumptions are required. Developers must implement exactly as defined.
+
+---
+➤ 1. INTRODUCTION
+
+➤➤ 1.1 Purpose
+
+Define every functional and non-functional requirement for GhostBus — a premium ghost production marketplace + services platform.
+
+➤➤ 1.2 System Nature
+
+GhostBus is a hybrid of:
+
+* Marketplace (exclusive tracks)
+* Service marketplace (custom gigs)
+* SaaS infrastructure (automation, payouts, delivery, analytics)
+
+---
+
+➤ 2. GLOBAL UI/UX SYSTEM (APPLE-STYLE)
+
+➤➤ 2.1 Design Philosophy
+
+* Minimal (Apple-style)
+* High whitespace usage
+* Smooth micro-interactions (150–200ms)
+* No clutter (max 3 primary actions per screen)
+* Premium feel (Splice + Vocalfy hybrid)
+
+➤➤ 2.2 Design Tokens
+
+* Radius: 12–16px
+* Shadow: soft (0 4px 20px rgba(0,0,0,0.06))
+* Colors:
+
+  * Background: #FFFFFF
+  * Section: #F7F7F8
+  * Primary: Premium Blue (#0A84FF)
+  * Text: #111111
+  * Secondary: #6B6B6B
+* Typography:
+
+  * Inter / SF Pro
+  * Heading: 24–40px
+  * Body: 14–16px
+
+---
+
+➤ 3. GLOBAL LAYOUT
+➤➤ 3.1 Top Navigation (Sticky)
+
+Left:
+
+* Logo (click → home)
+
+Center:
+
+* Search (debounced 300ms)
+* Instant results dropdown (tracks + labels)
+
+Menu:
+
+* Genres
+* Services
+* Start Selling
+* How we Work
+
+Right:
+
+* Cart (badge count)
+* Profile (dropdown menu)
+
+---
+
+➤➤ 3.2 Persistent Audio Player (CRITICAL)
+
+Position: Bottom fixed
+
+Components:
+
+* Artwork (High quality as possible)
+* Track name + label
+* Controls: play/pause, next, prev
+* Seek bar (live)
+* Volume slider
+* Queue panel toggle
+
+Behavior:
+
+* NEVER resets on navigation
+* Maintains queue globally
+* Preloads next track (buffer 20%)
+
+---
+
+➤ 4. HOME PAGE (DETAILED)
+
+➤➤ 4.1 Hero Section (Dynamic Video Background)
+
+Visual Profile:
+
+* Cinematic auto-playing looping video
+* Establish premium authority instantly
+
+Layout:
+
+* Full width / 100vh height
+* Smooth scroll (parallax or fade)
+* Dark gradient overlay for readability
+
+Foreground:
+
+* Headline
+* Subtext
+* CTA (Start Browsing / Start Selling)
+
+➤➤ 4.2 Genre Filter Bar (MANDATORY)
+
+Scrollable chips:
+Afro House, House Music, Tech House, Melodic Techno, Bigroom, Pop, Trap, Techno, Hard Techno, Deep House, UK Garage, Bass House, Hardstyle, Mainstage, Drum & Bass, Reggaeton
+
+Behavior:
+
+* Multi-select
+* Active = blue
+* Hover = glow
+
+---
+
+➤➤ 4.3 Track Grid
+
+Card:
+
+* Artwork
+* Title
+* Genre
+* BPM / Key
+* Price
+* Track Description
+* Play overlay
+
+Hover:
+
+* Scale 1.03
+* Show play button
+
+Click:
+
+* Adds to queue
+
+---
+
+➤ 5. TRACK LISTING PAGE
+
+➤➤ Sidebar Filters
+
+* Genre (multi-checkbox)
+* BPM slider (min–max)
+* Key dropdown
+* Price slider
+* Toggle:
+
+  * 100% Original
+  * Contains Loops
+
+➤➤ Results
+
+* Pagination (20 per page)
+* Sort:
+
+  * Latest
+  * Price
+  * BPM
+
+---
+
+➤ 6. TRACK DETAIL PAGE
+
+➤➤ Layout
+
+Left:
+
+* Artwork
+* Waveform (Wavesurfer)
+
+Right:
+
+* Title
+* Label
+* BPM / Key
+* Price
+* Buttons:
+
+  * Add to Cart
+  * Wishlist
+
+Below:
+
+* Description
+* Files included
+* Transparency badge
+
+---
+
+➤ 7. CART & CHECKOUT
+
+➤➤ Cart Drawer
+
+* List items
+* Remove
+* Total
+
+➤➤ Checkout
+
+* Stripe (ONLY)
+* Minimal form
+* Confirm payment
+
+---
+
+➤ 8. SELLER DASHBOARD & UPLOAD PIPELINE
+
+Sidebar
+
+* Dashboard
+* Upload
+* Tracks (Status: Live, Pending, Rejected, Sold)
+* Earnings
+* Messages (Gig System)
+
+➤➤ Upload Flow (STRICT 5-STEP PIPELINE)
+
+Step 1: Metadata
+
+* Title
+* Genre
+* Sub-genre
+* BPM
+* Key
+* Description
+
+Step 2: Files
+
+* Upload Mastered WAV
+* Upload Unmastered WAV
+* Upload Stems (ZIP)
+* Upload MIDI (ZIP)
+* Upload Artwork
+
+Step 3: Transparency
+
+* Required toggle:
+
+  * 100% Original
+  * Contains Royalty-Free Loops
+
+Step 4: Pricing
+
+* Seller inputs price
+* System enforces minimum and maximum limits based on seller tier
+
+Step 5: Automated Verification & A&R Lock (CRITICAL)
+
+File Validation:
+
+* Backend checks ZIP size and structure
+* Prevent empty or low-quality stem uploads
+
+Uniqueness Scan:
+
+* System sends Mastered WAV to MRT API (e.g., DJMonitor)
+* If match found → instant REJECT
+
+A&R Lock:
+
+* If passed → status = PENDING_REVIEW
+* Track is NOT published automatically
+* Sent to admin moderation queue for manual approval
+
+---
+
+➤ 9. GIG SYSTEM
+
+➤➤ Flow
+
+Buyer → Message → Offer → Payment → Delivery
+
+States:
+
+* Pending
+* Active
+* Delivered
+* Revision
+* Completed
+
+---
+
+➤ 10. BACKEND ARCHITECTURE
+
+Stack:
+
+* Next.js (Frontend)
+* NestJS (Backend)
+* PostgreSQL
+* Redis + BullMQ
+* AWS S3
+* Stripe + Stripe Connect
+
+---
+
+➤ 11. DATABASE (CRITICAL RULES)
+
+Constraints:
+
+* One track = one sale only
+* Unique(track_id)
+
+Transactions:
+
+* SELECT FOR UPDATE on purchase
+
+---
+
+➤ 12. PAYMENT SYSTEM & TIERED COMMISSIONS (STRICT)
+
+➤➤ Payment Infrastructure
+
+* Stripe ONLY
+* Stripe Connect for payouts
+* No manual payout processing
+
+➤➤ Commission Logic (Dynamic System)
+
+Tier 1 (New Seller): Platform fee = 36%
+Tier 2 (Mid-Volume): Platform fee = 30%
+Tier 3 (High-Volume): Platform fee = 25%
+
+* Backend calculates commission dynamically based on seller lifetime sales
+
+➤➤ Stripe Connect Flow
+
+* Remaining balance routed instantly to seller account
+
+➤➤ Webhook Execution Flow (Post-Payment)
+
+1. Mark track status = SOLD
+
+   * Remove from public grid instantly
+
+2. Trigger Stripe Connect payout split
+
+3. Automated Legal Generation (PDFs)
+
+   * Copyright Transfer Agreement
+   * Non-Disclosure Agreement
+
+   Must include:
+
+   * Buyer Name/Entity
+   * Seller Name/Entity
+   * Track Title
+   * Purchase Price
+   * Date
+   * Unique Transaction ID
+
+4. Unlock S3 download links
+
+5. Send email:
+
+   * Invoice
+   * Download links
+
+---
+
+➤ 13. FILE SYSTEM & WATERMARKING (PIRACY PROTECTION)
+
+➤➤ Storage
+
+* AWS S3 private bucket
+
+➤➤ Structure
+
+* /tracks/{id}/preview.mp3
+* /tracks/{id}/full.zip
+* /tracks/{id}/legal_documents.pdf
+
+➤➤ Automated Watermarking (MANDATORY)
+
+* Backend worker (FFmpeg) auto-generates preview.mp3 from Mastered WAV
+* Inject "GhostBus" vocal watermark every 15 seconds
+
+Rules:
+
+* Clean WAV NEVER exposed before payment
+* Preview is always watermarked
+
+➤➤ Access
+
+* Signed URLs (5–10 min expiry)
+* Generated on-demand when buyer clicks download
+
+---
+
+➤ 14. ANALYTICS SYSTEM (ADVANCED)
+
+Tracked Events:
+
+* play
+* pause
+* resume
+* complete
+* seek
+
+Data:
+
+* user_id
+* track_id
+* duration
+* session
+
+Processing:
+
+* Redis queue (async)
+
+Metrics:
+
+* Plays
+* Avg duration
+* Conversion
+
+---
+
+➤ 15. ADMIN PANEL (FULL CONTROL)
+
+Admin can:
+
+* Edit ANYTHING
+* Delete ANYTHING
+* Override ANY status
+
+Includes:
+
+* Users
+* Tracks
+* Orders
+* Analytics
+* Content
+
+➤➤ A&R Moderation Queue (CRITICAL)
+
+* Dedicated dashboard for PENDING_REVIEW tracks
+* Inline audio player for preview
+
+Admin Actions:
+
+* APPROVE → publishes track
+* REJECT → sends email with feedback textbox
+* SUSPEND USER
+
+---
+
+➤ 16. SECURITY
+
+* JWT auth
+* Rate limiting
+* Signed URLs
+* Audit logs
+
+---
+
+➤ 17. ERROR HANDLING
+
+Cases:
+
+* Payment fail
+* Upload fail
+* Double purchase
+
+---
+
+➤ 18. PERFORMANCE & VIDEO OPTIMIZATION (STRICT)
+
+➤➤ Background Video Rules
+
+* Format: .webm (primary), .mp4 fallback
+* Max size: 5MB – 8MB
+* No audio track
+
+➤➤ Mobile Fallback
+
+* High-resolution static image (poster)
+* Loads instantly before video
+
+➤➤ General Performance
+
+* Lazy loading for below-the-fold assets
+
+---
+
+➤ 19. DEPLOYMENT
+
+* AWS EC2
+* Docker
+* Nginx
+* SSL
+
+---
+
+➤ 20. SCALING
+
+Phase 1: Monolith
+Phase 2: Services
+Phase 3: Kubernetes
+
+---
+
+➤ 21. USER ROLES & PERMISSIONS (STRICT RBAC)
+
+➤➤ Roles
+
+* Buyer
+* Seller
+* Admin
+* Super Admin (optional, system owner)
+
+➤➤ Permissions Matrix
+
+Buyer:
+
+* Browse, search, filter tracks
+* Add to cart, purchase, download
+* Wishlist management
+* Gig messaging & payments
+
+Seller:
+
+* All Buyer permissions
+* Create/Manage Virtual Label profile
+* Upload tracks (5-step pipeline)
+* Manage gigs & messages
+* View earnings & analytics (own data)
+
+Admin:
+
+* Moderate tracks (A&R queue)
+* Manage users (view/edit/suspend)
+* Manage orders/refunds
+* View platform analytics
+* Manage homepage/content
+
+Super Admin:
+
+* All Admin permissions
+* Override any status/record
+* Configure commissions/tiers
+* System-level settings
+
+➤➤ Auth Guards
+
+* JWT access + refresh tokens
+* Route guards by role
+* Fine-grained permission checks at API level
+
+---
+
+➤ 22. API SPECIFICATION (MINIMUM CONTRACT)
+
+➤➤ Auth
+
+* POST /auth/register
+* POST /auth/login
+* POST /auth/logout
+* POST /auth/refresh
+* GET  /auth/me
+
+➤➤ Tracks
+
+* GET  /tracks
+* POST /tracks (seller)
+* GET  /tracks/:id
+* PUT  /tracks/:id (seller/admin)
+* DELETE /tracks/:id (admin)
+
+➤➤ Cart & Orders
+
+* GET  /cart
+* POST /cart/add
+* POST /cart/remove
+* POST /checkout
+* GET  /orders
+* GET  /orders/:id
+
+➤➤ Seller
+
+* GET  /seller/dashboard
+* GET  /seller/tracks
+* GET  /seller/earnings
+
+➤➤ Gigs
+
+* GET  /gigs
+* POST /gigs
+* POST /gigs/message
+* POST /gigs/offer
+
+➤➤ Admin
+
+* GET  /admin/tracks/pending
+* POST /admin/tracks/approve
+* POST /admin/tracks/reject
+* POST /admin/users/suspend
+
+➤➤ Analytics
+
+* POST /analytics/event
+
+---
+
+➤ 23. NOTIFICATION SYSTEM (REAL-TIME + EMAIL)
+
+➤➤ Channels
+
+* In-app (WebSockets via Socket.io)
+* Email (SendGrid/Mailgun)
+
+➤➤ Events
+
+* Track approved/rejected
+* New sale completed
+* New gig message
+* Payment confirmation
+* Refund processed
+
+➤➤ Storage
+
+* Notifications table (user_id, type, payload, read_status)
+
+---
+
+➤ 24. LICENSE & LEGAL STORAGE
+➤➤ Storage Structure
+
+* /licenses/{order_id}.pdf
+
+➤➤ Rules
+
+* Linked to order_id
+* Accessible from buyer dashboard
+* Immutable after generation
+
+---
+
+➤ 25. REFUND & DISPUTE SYSTEM
+
+➤➤ Track Refunds
+
+* Admin-triggered only
+* Status: Requested → Approved → Refunded
+* Stripe refund API integration
+
+➤➤ Gig Disputes
+
+* Buyer can open dispute
+* Admin reviews
+* Outcome:
+
+  * Release escrow to seller
+  * Refund buyer
+
+---
+
+➤ 26. SEARCH SYSTEM (BACKEND)
+
+➤➤ Engine
+
+* PostgreSQL Full-Text Search (Phase 1)
+* ElasticSearch (Phase 2 optional)
+
+➤➤ Indexed Fields
+
+* Title
+* Genre
+* Label name
+
+➤➤ Ranking
+
+* Relevance score
+* Popularity (play count)
+
+---
+
+➤ 27. RATE LIMITING & ABUSE CONTROL
+
+➤➤ Limits
+
+* Auth: 5 req/min/IP
+* API: 100 req/min/IP
+* Upload: file size + frequency limits
+
+➤➤  Anti-Abuse
+
+* IP tracking
+* Device fingerprint (optional)
+* CAPTCHA on suspicious activity
+
+---
+
+➤ 28. LOGGING SYSTEM
+
+➤➤ Logs
+
+* Request logs
+* Error logs
+* Payment logs
+* Admin action logs
+
+➤➤ Tools
+
+* Winston (backend logging)
+
+---
+
+➤ 29. BACKUP & DATA SAFETY
+
+➤➤ Database
+
+* Daily automated backups (AWS RDS snapshots)
+
+➤➤ Storage
+
+* S3 versioning enabled
+
+➤➤ Recovery
+
+* Disaster recovery plan (restore within SLA)
+
+---
+
+➤ 30. EMAIL SYSTEM
+
+## Email Types
+
+* Welcome email
+* Purchase confirmation
+* Track approval/rejection
+* Gig updates
+* Invoice delivery
+
+➤ Provider
+
+* SendGrid / Mailgun
+
+---
+
+➤ 31. WISHLIST SYSTEM
+
+* Add to wishlist
+* Remove from wishlist
+* View saved tracks
+
+---
+
+➤ 32. LABEL (SELLER BRAND) PAGE
+
+## Components
+
+* Logo
+* Description
+* Track list
+* Seller stats
+
+---
+
+➤ 33. CDN & ASSET DELIVERY
+
+* Cloudflare CDN for previews, images, static assets
+
+---
+
+➤ 34. SELLER VERIFICATION (KYC) & PAYOUT ENABLEMENT
+
+* Stripe Connect onboarding REQUIRED for all sellers
+* KYC handled via Stripe (identity, bank, tax forms)
+* Rule: payouts DISABLED until KYC = verified
+* Store seller.verification_status
+
+---
+
+➤ 35. TAX HANDLING (GLOBAL)
+
+* Use Stripe Tax (preferred) or manual VAT/GST
+* Determine tax based on buyer location
+* Add tax at checkout dynamically
+* Invoice MUST include: tax amount, region, rate
+
+---
+
+➤ 36. STRIPE WEBHOOK EDGE CASES
+
+* payment_intent.payment_failed → order.status = FAILED
+* charge.refunded → order.status = REFUNDED
+* payout.failed → notify seller + admin
+
+Rules:
+
+* Idempotency keys REQUIRED
+* Webhook retries handled (Stripe default)
+
+---
+
+➤ 37. FILE SECURITY (ANTI-MALWARE)
+
+* All uploads scanned (e.g., ClamAV)
+* Infected files → auto reject + notify seller
+
+---
+
+➤ 38. TRACK VERSIONING SYSTEM
+
+* Each upload = version_id
+* Only latest version sent to A&R queue
+* Previous versions archived (non-public)
+
+---
+
+➤ 39. SESSION MANAGEMENT
+
+* Access token: 15 minutes
+* Refresh token: 7–30 days
+* Logout invalidates refresh token
+
+---
+
+➤ 40. DOWNLOAD TRACKING
+
+* Log each download:
+
+  * user_id
+  * track_id
+  * timestamp
+  * IP address
+* Optional: download limits per purchase
+
+---
+
+➤ 41. SOFT DELETE SYSTEM
+
+* Records flagged as deleted (is_deleted = true)
+* Not physically removed from DB
+* Admin can restore
+
+---
+➤ 42. FEATURE FLAGS
+
+* Toggle features without redeploy
+* Examples:
+
+  * Gigs enable/disable
+  * Hero video enable/disable
+
+---
+
+➤ 43. MONITORING & ALERTING
+
+* AWS CloudWatch (uptime + logs)
+* Sentry (error tracking)
+
+Alerts for:
+
+* Payment failures
+* Server crashes
+* Webhook failures
+
+---   
