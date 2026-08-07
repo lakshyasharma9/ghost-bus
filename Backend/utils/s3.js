@@ -23,12 +23,10 @@ function getS3() {
 
     _s3Client = new S3Client({
       region,
-      endpoint: `https://s3.${region}.amazonaws.com`,
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       },
-      forcePathStyle: true,
     });
     console.log(`[S3] Initialized: region=${region}, bucket=${bucket}`);
   }
