@@ -162,17 +162,27 @@ export async function deleteFromS3(key) {
 export async function getSignedDownloadUrl(key, expiresInSeconds = 3600) {
   if (!key) return null;
 
-  const command = new GetObjectCommand({
-    Bucket: getBucket(),
-    Key: key,
+  // Use a fresh client without checksum for presigned URLs
+  // AWS SDK v3.700+ adds x-amz-checksum-mode by default which breaks external access
+  const { S3Client: S3C, GetObjectCommand: GOC } = await import('@aws-sdk/client-s3');
+  const { getSignedUrl: gsu } = await import('@aws-sdk/s3-request-presigner');
+  
+  const bucket = process.env.AWS_S3_BUCKET || '';
+  const regionMatch = bucket.match(/ap-southeast-2|us-east-1|eu-west-1|ap-south-1|ap-northeast-1/);
+  const region = regionMatch ? regionMatch[0] : (process.env.AWS_REGION || 'ap-southeast-2');
+
+  const client = new S3C({
+    region,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
   });
 
-  // Pass requestChecksumCalculation: 'WHEN_REQUIRED' to prevent
-  // x-amz-checksum-mode being added to presigned URLs (causes 403 on some clients)
-  return getSignedUrl(getS3(), command, {
-    expiresIn: expiresInSeconds,
-    unhoistableHeaders: new Set(['x-amz-checksum-mode']),
-  });
+  const command = new GOC({ Bucket: bucket, Key: key });
+  return gsu(client, command, { expiresIn: expiresInSeconds });
 }
 
 /**
