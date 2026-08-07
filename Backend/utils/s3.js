@@ -167,7 +167,12 @@ export async function getSignedDownloadUrl(key, expiresInSeconds = 3600) {
     Key: key,
   });
 
-  return getSignedUrl(getS3(), command, { expiresIn: expiresInSeconds });
+  // Pass requestChecksumCalculation: 'WHEN_REQUIRED' to prevent
+  // x-amz-checksum-mode being added to presigned URLs (causes 403 on some clients)
+  return getSignedUrl(getS3(), command, {
+    expiresIn: expiresInSeconds,
+    unhoistableHeaders: new Set(['x-amz-checksum-mode']),
+  });
 }
 
 /**
