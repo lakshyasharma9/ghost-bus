@@ -147,46 +147,46 @@ export async function generatePreviewMP3(masteredS3Key, watermarkS3Key, trackId)
         : Promise.resolve(null),
     ]);
 
+    const wmFilePath = watermarkUpload?.file_path ?? null;
+
     console.log(`[FFmpeg] Files uploaded. Processing watermarked preview...`);
 
-    // Use the same dir_id for all files so ffmpeg can access them
+    // Use same dir_id for all files
     const dir_id = masteredUpload.dir_id;
 
-    // If watermark upload landed in different dir, re-upload to same dir
-    let wmFilePath = watermarkUpload?.file_path ?? null;
-    if (watermarkUpload && watermarkUpload.dir_id !== dir_id) {
-      const { buffer, contentType } = await downloadFromS3(watermarkS3Key);
-      const reUpload = await uploadToFfmpegStorage(buffer, `w2-${shortId}.mp3`, contentType, dir_id);
-      wmFilePath = reUpload.file_path;
-    }
-
-    const outputFile = `preview-${trackId.substring(0, 8)}.mp3`;
+    const outputFile = `preview-${shortId}.mp3`;
 
     let result;
     if (wmFilePath) {
-      // Full watermarked preview with amix filter
-      // filter_complex:
-      //   [0:a] trim to 30s, normalize volume
-      //   [1:a] watermark at 0s (lower volume)
-      //   [2:a] watermark at 15s
-      //   mix all 3, fade out last 3s
+      // Upload watermark a SECOND time as a separate file (needed for 0s AND 15s instances)
+      // Both must be in the same dir as the main track
+      let wm1Path = wmFilePath;
+      let wm2Path = null;
+
+      // Re-upload watermark as wm2 in same dir
+      const { buffer: w2Buf, contentType: w2Ct } = await downloadFromS3(watermarkS3Key);
+      const wm2Upload = await uploadToFfmpegStorage(w2Buf, `w2-${shortId}.mp3`, w2Ct, dir_id);
+      wm2Path = wm2Upload.file_path;
+
+      // Watermarked preview with amix filter
+      // [out] label required in maps when using filter_complex
       result = await ffmpegRequest('POST', '/ffmpeg/process', {
         task: {
           inputs: [
-            { file_path: masteredUpload.file_path },  // [0] main track
-            { file_path: wmFilePath },                 // [1] watermark @ 0s
-            { file_path: wmFilePath },                 // [2] watermark @ 15s
+            { file_path: masteredUpload.file_path }, // [0] main track
+            { file_path: wm1Path },                  // [1] watermark @ 0s
+            { file_path: wm2Path },                  // [2] watermark @ 15s
           ],
           filter_complex: [
             '[0:a]atrim=0:30,asetpts=PTS-STARTPTS,volume=0.9[main]',
             '[1:a]adelay=0|0,volume=0.35[wm0]',
             '[2:a]adelay=15000|15000,volume=0.35[wm15]',
-            '[main][wm0][wm15]amix=inputs=3:duration=first:normalize=0,afade=t=out:st=27:d=3',
+            '[main][wm0][wm15]amix=inputs=3:duration=first:normalize=0,afade=t=out:st=27:d=3[out]',
           ].join(';'),
           outputs: [{
             file: outputFile,
             options: ['-c:a', 'libmp3lame', '-b:a', '320k', '-ac', '2'],
-            maps: ['0'],
+            maps: ['[out]'],
           }],
           output_dir_id: dir_id,
         },
@@ -198,13 +198,7 @@ export async function generatePreviewMP3(masteredS3Key, watermarkS3Key, trackId)
           inputs: [{ file_path: masteredUpload.file_path }],
           outputs: [{
             file: outputFile,
-            options: [
-              '-t', '30',
-              '-c:a', 'libmp3lame',
-              '-b:a', '320k',
-              '-ac', '2',
-              '-af', 'afade=t=out:st=27:d=3',
-            ],
+            options: ['-t', '30', '-c:a', 'libmp3lame', '-b:a', '320k', '-ac', '2', '-af', 'afade=t=out:st=27:d=3'],
           }],
           output_dir_id: dir_id,
         },
