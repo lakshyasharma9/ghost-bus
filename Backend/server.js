@@ -12,6 +12,9 @@ dotenv.config({ path: '.env.local', override: true });
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust nginx reverse proxy — required for rate-limit, IP detection, HTTPS redirect
+app.set('trust proxy', 1);
+
 // ============================================
 // MIDDLEWARE
 // ============================================
