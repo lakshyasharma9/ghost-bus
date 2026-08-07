@@ -249,7 +249,7 @@ function Home() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(6,2,38,0.10),transparent_60%)]" />
         </div>
 
-        <div className="container-app relative pt-32 pb-24 text-center">
+        <div className="container-app relative pt-24 pb-16 md:pt-32 md:pb-24 text-center">
           <motion.span
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -360,7 +360,7 @@ function Home() {
           </div>
         </div>
         {topTracksView === "grid" ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
             {curated.map((t) => (
               <TrackCard key={t.id} track={t} queue={curated} />
             ))}
@@ -389,7 +389,7 @@ function Home() {
           </div>
         </div>
         {view === "grid" ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5">
             {newReleases.map((t) => <TrackCard key={t.id} track={t} queue={newReleases} />)}
           </div>
         ) : (
@@ -460,12 +460,12 @@ function Home() {
 
       {/* ── PAYOUT COUNTER + SELLER SATISFACTION ── */}
       <section className="container-app pt-24">
-        <div className="rounded-[32px] bg-gradient-to-br from-[#090446] to-[#1a0f8f] text-white p-12 md:p-16 relative overflow-hidden">
+        <div className="rounded-[32px] bg-gradient-to-br from-[#090446] to-[#1a0f8f] text-white p-8 md:p-16 relative overflow-hidden">
           <div className="absolute -top-40 -right-40 w-[500px] h-[500px] rounded-full bg-primary/20 blur-3xl" />
           <div className="relative">
             <div className="label-eyebrow text-white/50 mb-6">Platform Stats</div>
             <h2 className="font-display text-3xl md:text-4xl font-semibold mb-10">The Most Rewarding Premium EDM Ghost Production Marketplace</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mb-8">
               <Metric value={<><AnimatedCounter target={1700000} prefix="€" />+</>} label="Total Producer Payouts" />
               <Metric value={<><AnimatedCounter target={2400} />+</>} label="Tracks Sold" />
               <Metric value={<><AnimatedCounter target={98} />%</>} label="Buyer Satisfaction" />
@@ -486,7 +486,7 @@ function Home() {
 
       {/* ── CTA ── */}
       <section className="container-app pt-28">
-        <div className="rounded-[32px] text-white p-12 md:p-20 relative overflow-hidden"
+        <div className="rounded-[32px] text-white p-8 md:p-20 relative overflow-hidden"
           style={{ background: "linear-gradient(135deg, #060226 0%, #0d0540 40%, #1a0f8f 100%)" }}
         >
           <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 70% 60% at 50% 0%, rgba(90,60,255,0.18) 0%, transparent 70%)" }} />

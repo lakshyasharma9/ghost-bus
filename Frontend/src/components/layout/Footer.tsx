@@ -2,10 +2,10 @@ import { Link } from "@tanstack/react-router";
 
 export function Footer() {
   return (
-    <footer className="mt-32 border-t border-border bg-[--color-surface]">
-      <div className="container-app py-16 grid md:grid-cols-5 gap-10">
+    <footer className="mt-16 md:mt-32 border-t border-border bg-[--color-surface]">
+      <div className="container-app py-10 md:py-16 grid sm:grid-cols-2 md:grid-cols-5 gap-8 md:gap-10">
         {/* Brand column */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 sm:col-span-2">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#060226] to-[#1a0a5e] grid place-items-center text-white font-bold text-sm">G</div>
             <span className="font-semibold tracking-tight text-[17px]">GhostBus</span>

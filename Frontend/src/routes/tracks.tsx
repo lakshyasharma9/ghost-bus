@@ -97,9 +97,9 @@ function TracksPage() {
       {/* ── Filter Bar (inline, reference-style) ── */}
       <div className="mb-6 space-y-3">
         {/* Row 1: Sliders + Sort */}
-        <div className="flex flex-wrap items-end gap-5 p-4 bg-card border border-border rounded-xl">
+        <div className="flex flex-wrap items-end gap-3 md:gap-5 p-4 bg-card border border-border rounded-xl">
           {/* BPM Range */}
-          <div className="flex-1 min-w-[180px]">
+          <div className="flex-1 min-w-[140px]">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">BPM</span>
               <span className="text-xs tabular-nums font-medium">{bpmRange[0]} – {bpmRange[1]}</span>
@@ -111,7 +111,7 @@ function TracksPage() {
           </div>
 
           {/* Price Range */}
-          <div className="flex-1 min-w-[180px]">
+          <div className="flex-1 min-w-[140px]">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Price</span>
               <span className="text-xs tabular-nums font-medium">€{priceRange[0]} – €{priceRange[1]}</span>
@@ -214,7 +214,7 @@ function TracksPage() {
           <p className="text-sm text-muted-foreground">Try adjusting your filters.</p>
         </div>
       ) : view === "grid" ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {filtered.map((t) => <TrackCard key={t.id} track={t} queue={filtered} />)}
         </div>
       ) : (

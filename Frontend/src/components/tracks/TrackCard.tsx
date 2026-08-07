@@ -106,7 +106,7 @@ export function TrackCard({ track, queue }: { track: Track; queue?: Track[] }) {
           <Waveform seed={track.id} bars={40} progress={isCurrent ? a.progress : 0} />
         </div>
 
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground flex-wrap">
           <Pill>{track.genre}</Pill>
           <Pill>{track.bpm} BPM</Pill>
           <Pill>{track.musicalKey}</Pill>

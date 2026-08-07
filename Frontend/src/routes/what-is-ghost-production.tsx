@@ -15,7 +15,7 @@ function WhatIsGhostProductionPage() {
   return (
     <div className="container-app pt-12 pb-24 max-w-4xl mx-auto">
       <div className="label-eyebrow mb-3">Knowledge Base</div>
-      <h1 className="font-display text-5xl font-semibold tracking-tight mb-6">What Is Ghost Production?</h1>
+      <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-6">What Is Ghost Production?</h1>
       <p className="text-xl text-muted-foreground leading-relaxed mb-12 max-w-2xl">
         Ghost production is a professional music industry service where experienced producers create original tracks for artists, DJs, and labels — with full ownership transfer to the buyer.
       </p>

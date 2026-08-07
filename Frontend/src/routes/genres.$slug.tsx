@@ -111,7 +111,7 @@ function GenrePage() {
               const subtitle = colonIdx > -1 ? fullTitle.slice(colonIdx + 1).trim() : 'Buy Exclusive Tracks, Custom Beats & Ghost Production';
               return (
                 <>
-                  <h1 className="font-display text-4xl md:text-5xl font-semibold tracking-tight mb-2">
+                  <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-2">
                     {mainTitle}
                   </h1>
                   <p className="text-base font-bold text-foreground/80 mb-4">{subtitle}</p>
@@ -149,7 +149,7 @@ function GenrePage() {
           </Link>
         </div>
       ) : view === "grid" ? (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           {tracks.map((t) => <TrackCard key={t.id} track={t} queue={tracks} />)}
         </div>
       ) : (

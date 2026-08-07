@@ -112,8 +112,7 @@ function SellerProfilePage() {
       <div className="min-h-screen bg-background">
         {/* Default dark banner */}
         <div
-          className="relative w-full overflow-hidden"
-          style={{ height: 220 }}
+          className="relative w-full overflow-hidden h-40 sm:h-52"
         >
           <div
             className="w-full h-full"
@@ -169,7 +168,7 @@ function SellerProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* ── Banner ── */}
-      <div className="relative w-full overflow-hidden" style={{ height: 260 }}>
+      <div className="relative w-full overflow-hidden h-40 sm:h-52 md:h-64">
         {seller.bannerUrl ? (
           <img src={seller.bannerUrl} alt="" className="w-full h-full object-cover" />
         ) : (
@@ -263,7 +262,7 @@ function SellerProfilePage() {
         </div>
 
         {/* ── Stats ── */}
-        <div className="flex items-center gap-8 pb-8 border-b border-border">
+        <div className="flex items-center gap-5 sm:gap-8 pb-8 border-b border-border flex-wrap">
           <Stat icon={<Music className="w-4 h-4" />} value={seller.stats.availableTracks} label="Available" />
           <Stat icon={<ShoppingBag className="w-4 h-4" />} value={seller.stats.soldTracks} label="Sold Tracks" />
           <Stat icon={<Users className="w-4 h-4" />} value={seller.stats.followers} label="Followers" />

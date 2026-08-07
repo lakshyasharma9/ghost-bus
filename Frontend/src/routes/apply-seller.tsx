@@ -345,7 +345,7 @@ function ApplySellerPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 font-display">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 font-display">
               Producer Verification & Seller Application
             </h1>
             <p className="text-xl text-muted-foreground">
@@ -361,9 +361,9 @@ function ApplySellerPage() {
           <form onSubmit={handleSubmit} className="space-y-12">
             
             {/* Applicant Identification */}
-            <div className="bg-card border border-border rounded-3xl p-8">
+            <div className="bg-card border border-border rounded-3xl p-5 md:p-8">
               <h2 className="text-2xl font-bold mb-6 text-primary font-display">APPLICANT IDENTIFICATION</h2>
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                   <label className="block text-sm font-semibold mb-2">Full Legal Name *</label>
                   <input
@@ -498,7 +498,7 @@ function ApplySellerPage() {
             </div>
 
             {/* Producer Authenticity & Rights Verification */}
-            <div className="bg-card border border-border rounded-3xl p-8">
+            <div className="bg-card border border-border rounded-3xl p-5 md:p-8">
               <h2 className="text-2xl font-bold mb-6 text-primary font-display">PRODUCER AUTHENTICITY & RIGHTS VERIFICATION</h2>
               <div className="space-y-6">
                 

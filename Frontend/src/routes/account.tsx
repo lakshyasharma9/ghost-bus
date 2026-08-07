@@ -43,10 +43,24 @@ function AccountLayout() {
       {/* Navbar */}
       <Navbar />
 
-      <div className="container-app py-8 flex-1">
+      {/* Mobile tab nav */}
+      <div className="lg:hidden border-b border-border bg-background sticky top-16 z-40 overflow-x-auto">
+        <div className="flex min-w-max px-4 py-2 gap-1">
+          <MobileNavLink to="/account" icon={<Home className="w-4 h-4" />} exact>Overview</MobileNavLink>
+          <MobileNavLink to="/account/orders" icon={<ShoppingBag className="w-4 h-4" />}>Orders</MobileNavLink>
+          <MobileNavLink to="/account/favorites" icon={<Heart className="w-4 h-4" />}>Favorites</MobileNavLink>
+          <MobileNavLink to="/account/following" icon={<Users className="w-4 h-4" />}>Following</MobileNavLink>
+          <MobileNavLink to="/account/profile" icon={<User className="w-4 h-4" />}>Settings</MobileNavLink>
+          <MobileNavLink to="/account/mailing" icon={<Mail className="w-4 h-4" />}>Mailing</MobileNavLink>
+          <MobileNavLink to="/account/support" icon={<Headphones className="w-4 h-4" />}>Support</MobileNavLink>
+          <MobileNavLink to="/apply-seller" icon={<User className="w-4 h-4" />}>Sell</MobileNavLink>
+        </div>
+      </div>
+
+      <div className="container-app py-6 lg:py-8 flex-1">
         <div className="flex gap-8">
-          {/* Sidebar */}
-          <aside className="w-64 shrink-0">
+          {/* Sidebar — desktop only */}
+          <aside className="hidden lg:block w-64 shrink-0">
             <nav className="sticky top-20 space-y-1">
               <NavLink to="/account" icon={<Home className="w-4 h-4" />} exact>
                 Account Overview
@@ -101,6 +115,20 @@ function NavLink({ to, icon, children, exact }: { to: string; icon: React.ReactN
       to={to}
       className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted rounded-xl transition-colors"
       activeProps={{ className: "flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl transition-colors bg-accent text-primary font-medium" }}
+      activeOptions={exact ? { exact: true } : undefined}
+    >
+      {icon}
+      {children}
+    </Link>
+  );
+}
+
+function MobileNavLink({ to, icon, children, exact }: { to: string; icon: React.ReactNode; children: React.ReactNode; exact?: boolean }) {
+  return (
+    <Link
+      to={to}
+      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground rounded-lg transition-colors whitespace-nowrap"
+      activeProps={{ className: "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors whitespace-nowrap bg-accent text-primary" }}
       activeOptions={exact ? { exact: true } : undefined}
     >
       {icon}

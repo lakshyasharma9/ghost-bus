@@ -18,7 +18,7 @@ function LegalPage() {
             animate={{ opacity: 1, y: 0 }}
             className="text-center mb-12"
           >
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 font-display">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 font-display">
               Legal Terms & Agreements
             </h1>
             <p className="text-xl text-muted-foreground">

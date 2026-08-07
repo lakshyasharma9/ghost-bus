@@ -268,13 +268,21 @@ export function Navbar() {
               </button>
             </div>
             <div className="container-app py-4">
-              {/* <SmartSearch /> */}
+              <div className="relative w-full">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <input
+                  placeholder="Search tracks, genres, producers..."
+                  className="w-full h-11 pl-11 pr-4 rounded-full bg-muted border border-border focus:bg-white focus:border-primary/40 focus:outline-none text-sm placeholder:text-muted-foreground"
+                  disabled
+                />
+              </div>
             </div>
             <nav className="container-app py-4 flex flex-col gap-1">
               <Link to="/tracks" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">Genres</Link>
               <Link to="/services" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">Services</Link>
               <Link to="/sell" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">Start Selling</Link>
               <Link to="/how-we-work" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">How We Work</Link>
+              <Link to="/contact" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">Contact</Link>
               {user ? (
                 <>
                   {sellerModeEnabled ? (

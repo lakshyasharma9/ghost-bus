@@ -136,8 +136,8 @@ function CreationProcess({ track, moreTracks }: { track: Track; moreTracks: Trac
   return (
     <section className="mt-14 mb-12">
       <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-        <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-tight">Creation process</h2>
-        <div className="flex gap-1 p-1 bg-muted rounded-xl">
+        <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight">Creation process</h2>
+        <div className="flex gap-1 p-1 bg-muted rounded-xl overflow-x-auto max-w-full">
           {tabs.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)}
               className={`h-9 px-4 rounded-lg text-sm font-medium transition-all ${tab === t.id ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
@@ -206,7 +206,7 @@ function CreationProcess({ track, moreTracks }: { track: Track; moreTracks: Trac
                   </h3>
 
                   {/* 3 Steps — horizontal icons connected by line */}
-                  <div className="flex items-start justify-between gap-4 relative">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-8 sm:gap-4 relative">
                     {/* Connecting line */}
                     <div className="absolute top-8 left-[calc(16.66%+28px)] right-[calc(16.66%+28px)] h-px hidden md:block" style={{ background: "linear-gradient(90deg, rgba(139,92,246,0.4) 0%, rgba(139,92,246,0.25) 50%, rgba(74,222,128,0.4) 100%)" }} />
 
@@ -259,7 +259,7 @@ function CreationProcess({ track, moreTracks }: { track: Track; moreTracks: Trac
               </div>
 
               {/* ── Producer Card ── */}
-              <div className="flex items-center justify-between gap-4 p-5 bg-card border border-border rounded-xl flex-wrap">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-card border border-border rounded-xl">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#060226] to-[#1a0a5e] grid place-items-center text-white font-bold text-xl shrink-0">
                     {track.producer.charAt(0)}
@@ -462,7 +462,7 @@ function TrackDetail() {
                 </div>
 
                 {/* Version dropdown + Play + Waveform — same line */}
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-2 md:gap-3">
                   {/* Version selector (inline) */}
                   {(track as any).versions && (
                     (track as any).versions.radioEdit || (track as any).versions.extendedMix || (track as any).versions.instrumental

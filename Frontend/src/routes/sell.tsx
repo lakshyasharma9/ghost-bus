@@ -18,7 +18,7 @@ function Sell() {
         <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent text-accent-foreground text-xs font-semibold tracking-widest uppercase">
           <Sparkles className="w-3.5 h-3.5" /> For Producers
         </span>
-        <h1 className="mt-6 font-display text-5xl md:text-6xl font-semibold tracking-[-0.02em] leading-[1]">
+        <h1 className="mt-6 font-display text-4xl sm:text-5xl md:text-6xl font-semibold tracking-[-0.02em] leading-[1]">
           Sell once. <span className="text-gradient-blue">Sell big.</span>
         </h1>
         <p className="mt-6 text-lg text-muted-foreground">
@@ -32,7 +32,7 @@ function Sell() {
         </div>
       </div>
 
-      <div className="mt-24 grid md:grid-cols-3 gap-5">
+      <div className="mt-16 md:mt-24 grid md:grid-cols-3 gap-5">
         {[
           { icon: <Upload className="w-5 h-5" />, t: "Upload in minutes", d: "Drag and drop your stems, masters, and metadata. Our 5-step wizard handles the rest." },
           { icon: <ShieldCheck className="w-5 h-5" />, t: "A&R curated", d: "Every track is reviewed by our A&R team. Quality over quantity, always." },
@@ -46,7 +46,7 @@ function Sell() {
         ))}
       </div>
 
-      <div className="mt-24 rounded-[28px] bg-[--color-surface] border border-border p-12 grid md:grid-cols-4 gap-8 text-center">
+      <div className="mt-24 rounded-[28px] bg-[--color-surface] border border-border p-8 md:p-12 grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 text-center">
         {[
           ["$2.4M+", "Paid to producers"],
           ["12,000+", "Active buyers"],

@@ -154,13 +154,13 @@ function ContactPage() {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="label-eyebrow mb-3">Support</div>
-          <h1 className="font-display text-5xl font-semibold tracking-tight mb-4">Contact Us</h1>
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-4">Contact Us</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             Have a question or need assistance? Fill out the form below and our support team will get back to you within 24-48 hours.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-10">
+        <div className="grid lg:grid-cols-3 gap-6 md:gap-10">
           {/* Contact Info */}
           <div className="space-y-6">
             <div className="p-6 bg-card border border-border rounded-2xl">
@@ -182,7 +182,7 @@ function ContactPage() {
 
           {/* Contact Form */}
           <div className="lg:col-span-2">
-            <form onSubmit={handleSubmit} className="p-8 bg-card border border-border rounded-2xl space-y-6">
+            <form onSubmit={handleSubmit} className="p-5 md:p-8 bg-card border border-border rounded-2xl space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
                 {/* Full Name */}
                 <div className="space-y-2">

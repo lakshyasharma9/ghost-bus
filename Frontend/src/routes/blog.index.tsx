@@ -48,7 +48,7 @@ function BlogIndexPage() {
     <div className="container-app pt-12 pb-24">
       <div className="max-w-3xl mb-12">
         <div className="label-eyebrow mb-3">Blog</div>
-        <h1 className="font-display text-5xl font-semibold tracking-tight mb-4">GhostBus Blog</h1>
+        <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-4">GhostBus Blog</h1>
         <p className="text-xl text-muted-foreground">Guides, tutorials, and industry insights for DJs, artists, and ghost producers.</p>
       </div>
 

@@ -79,7 +79,7 @@ function FaqPage() {
   return (
     <div className="container-app pt-12 pb-24 max-w-3xl mx-auto">
       <div className="label-eyebrow mb-3">Support</div>
-      <h1 className="font-display text-5xl font-semibold tracking-tight mb-4">Frequently Asked Questions</h1>
+      <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-4">Frequently Asked Questions</h1>
       <p className="text-muted-foreground mb-10">Everything you need to know about GhostBus.</p>
 
       {/* Search */}

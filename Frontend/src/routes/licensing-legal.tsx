@@ -15,7 +15,7 @@ function LicensingLegalPage() {
   return (
     <div className="container-app pt-12 pb-24 max-w-4xl mx-auto">
       <div className="label-eyebrow mb-3">Legal</div>
-      <h1 className="font-display text-5xl font-semibold tracking-tight mb-6">Licensing &amp; Legal</h1>
+      <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-semibold tracking-tight mb-6">Licensing &amp; Legal</h1>
       <p className="text-xl text-muted-foreground leading-relaxed mb-12 max-w-2xl">
         Every GhostBus transaction is backed by legally binding documentation. Here's exactly what you receive and how it protects you.
       </p>
