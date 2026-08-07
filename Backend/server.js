@@ -30,6 +30,9 @@ app.use(cors({
   origin: [
     process.env.FRONTEND_URL || 'http://localhost:5173',
     process.env.ADMIN_URL || 'http://localhost:8080',
+    // www variant always allowed
+    'https://www.ghostbusaudio.com',
+    'https://ghostbusaudio.com',
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
