@@ -424,12 +424,42 @@ function TrackDetail() {
           </div>
 
           {/* Main card */}
-          <div className="bg-card border border-border rounded-2xl p-5 md:p-6">
+          <div className="bg-card border border-border rounded-2xl p-4 md:p-6">
+
+            {/* ── MOBILE layout: artwork full-width top, content below ── */}
+            {/* ── DESKTOP layout: artwork left, content right (flex row) ── */}
+
+            {/* Mobile-only: full-width artwork banner */}
+            <div className="block md:hidden mb-4">
+              <div
+                className="w-full h-48 rounded-xl bg-cover bg-center bg-muted shadow-sm relative"
+                style={track.artwork ? { backgroundImage: `url(${track.artwork})` } : {}}
+              >
+                {!track.artwork && (
+                  <div className="w-full h-full rounded-xl grid place-items-center bg-gradient-to-br from-[#060226] to-[#1a0f8f]">
+                    <span className="text-white font-bold text-4xl">{track.title.charAt(0)}</span>
+                  </div>
+                )}
+                {/* Play button overlay on mobile */}
+                <button
+                  onClick={() => isCurrent ? a.toggle() : a.play(track, [track])}
+                  disabled={a.loading && isCurrent}
+                  className="absolute bottom-3 right-3 w-12 h-12 rounded-full bg-primary text-white grid place-items-center shadow-lg hover:bg-[--color-primary-hover] transition disabled:opacity-60"
+                >
+                  {a.loading && isCurrent ? <Loader2 className="w-5 h-5 animate-spin" />
+                    : isPlaying ? <Pause className="w-5 h-5" />
+                    : <Play className="w-5 h-5 ml-0.5" />}
+                </button>
+              </div>
+            </div>
+
+            {/* Flex row — desktop keeps artwork+content side-by-side */}
             <div className="flex gap-5 md:gap-6">
-              {/* Artwork — compact square */}
-              <div className="shrink-0">
+
+              {/* Desktop-only artwork */}
+              <div className="hidden md:block shrink-0">
                 <div
-                  className="w-[140px] h-[140px] sm:w-[180px] sm:h-[180px] rounded-xl bg-cover bg-center bg-muted shadow-sm"
+                  className="w-[180px] h-[180px] rounded-xl bg-cover bg-center bg-muted shadow-sm"
                   style={track.artwork ? { backgroundImage: `url(${track.artwork})` } : {}}
                 >
                   {!track.artwork && (
@@ -440,11 +470,11 @@ function TrackDetail() {
                 </div>
               </div>
 
-              {/* Content — right side */}
+              {/* Content */}
               <div className="flex-1 min-w-0 flex flex-col gap-3">
                 {/* Title + Artist */}
                 <div>
-                  <h1 className="font-display text-2xl md:text-3xl font-bold tracking-tight leading-tight truncate">
+                  <h1 className="font-display text-xl md:text-3xl font-bold tracking-tight leading-tight">
                     {track.title}
                   </h1>
                   <div className="flex items-center gap-1.5 mt-1">
@@ -461,24 +491,24 @@ function TrackDetail() {
                   <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">{track.genre}</span>
                 </div>
 
-                {/* Version dropdown + Play + Waveform — same line */}
-                <div className="flex flex-wrap items-center gap-2 md:gap-3">
-                  {/* Version selector (inline) */}
-                  {(track as any).versions && (
-                    (track as any).versions.radioEdit || (track as any).versions.extendedMix || (track as any).versions.instrumental
-                  ) ? (
-                    <VersionSelector
-                      track={track}
-                      versions={(track as any).versions}
-                      mainUrl={(track as any).previewUrl || track.audioUrl || ''}
-                    />
-                  ) : null}
+                {/* Version selector — only when versions exist */}
+                {(track as any).versions && (
+                  (track as any).versions.radioEdit || (track as any).versions.extendedMix || (track as any).versions.instrumental
+                ) ? (
+                  <VersionSelector
+                    track={track}
+                    versions={(track as any).versions}
+                    mainUrl={(track as any).previewUrl || track.audioUrl || ''}
+                  />
+                ) : null}
 
-                  {/* Play button */}
+                {/* Waveform row — play button hidden on mobile (already on artwork) */}
+                <div className="flex items-center gap-2">
+                  {/* Play button — desktop only */}
                   <button
                     onClick={() => isCurrent ? a.toggle() : a.play(track, [track])}
                     disabled={a.loading && isCurrent}
-                    className="w-9 h-9 rounded-full bg-primary text-white grid place-items-center shrink-0 hover:bg-[--color-primary-hover] transition shadow-sm disabled:opacity-60"
+                    className="hidden md:grid w-9 h-9 rounded-full bg-primary text-white place-items-center shrink-0 hover:bg-[--color-primary-hover] transition shadow-sm disabled:opacity-60"
                   >
                     {a.loading && isCurrent ? <Loader2 className="w-4 h-4 animate-spin" />
                       : isPlaying ? <Pause className="w-4 h-4" />
@@ -508,7 +538,7 @@ function TrackDetail() {
                     `${track.bpm} BPM`,
                     track.musicalKey,
                     track.vocalType === "ai" ? "AI Vocal" : track.vocalType === "exclusive" ? "Exclusive Vocals" : "Instrumental",
-                    track.original ? "100% Original Production" : "Contains Royalty-Free Loops",
+                    track.original ? "Original" : "RF Loops",
                   ].map(pill => (
                     <span key={pill} className="h-6 px-2.5 rounded-full bg-muted border border-border text-foreground/70 text-[11px] font-medium flex items-center">
                       {pill}
@@ -517,7 +547,7 @@ function TrackDetail() {
                 </div>
 
                 {/* Price + CTA */}
-                <div className="flex items-center gap-3 pt-1">
+                <div className="flex items-center gap-2 pt-1 flex-wrap">
                   <span className="text-2xl font-bold tracking-tight">€{track.price}</span>
                   <button
                     disabled={track.sold}
