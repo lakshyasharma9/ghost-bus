@@ -243,7 +243,7 @@ function Home() {
       <section className="relative -mt-[72px] min-h-[100svh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <video autoPlay loop muted playsInline className="w-full h-full object-cover">
-            <source src="/12749811_1920_1080_25fps.mp4" type="video/mp4" />
+            <source src="/heroooooo.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/70 to-white" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(6,2,38,0.10),transparent_60%)]" />
