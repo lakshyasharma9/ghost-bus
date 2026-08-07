@@ -22,7 +22,11 @@ async function main() {
     orderBy: { createdAt: 'asc' },
   });
 
-  const needsPreview = tracks.filter(t => !t.waveformData?.ffmpegPreviewUrl);
+  const needsPreview = tracks.filter(t => {
+    const p = t.waveformData?.ffmpegPreviewUrl;
+    // Needs regeneration if: no preview, or preview is an expired CDN URL (not an S3 key)
+    return !p || p.startsWith('http');
+  });
   console.log(`Found ${tracks.length} approved tracks, ${needsPreview.length} need preview generation.\n`);
 
   let success = 0;
@@ -65,7 +69,7 @@ async function main() {
         data: {
           waveformData: {
             ...existing,
-            ffmpegPreviewUrl: previewUrl,
+            ffmpegPreviewUrl: previewUrl,  // Now an S3 key like "tracks/previews/xxxx-wm.mp3"
             ffmpegProcessedAt: new Date().toISOString(),
             ...waveformUpdate,
           },

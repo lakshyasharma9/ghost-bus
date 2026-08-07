@@ -460,11 +460,19 @@ export async function getTrackById(req, res) {
     const waveformData = track.waveformData || {};
 
     // ── Generate signed preview URL (30 min) ──
-    // Use FFmpeg-generated preview if available, else fall back to full WAV
-    const ffmpegPreviewUrl = waveformData?.ffmpegPreviewUrl ?? null;
-    const previewUrl = ffmpegPreviewUrl
-      ? ffmpegPreviewUrl
-      : (track.audioUrl ? await getPreviewUrl(track.audioUrl) : null);
+    // Use FFmpeg-generated preview (S3 key) if available, else fall back to full WAV
+    const ffmpegPreviewKey = waveformData?.ffmpegPreviewUrl ?? null;
+    let previewUrl;
+    if (ffmpegPreviewKey && !ffmpegPreviewKey.startsWith('http')) {
+      // It's an S3 key — generate a fresh signed URL
+      previewUrl = await getPreviewUrl(ffmpegPreviewKey);
+    } else if (ffmpegPreviewKey && ffmpegPreviewKey.startsWith('http')) {
+      // Legacy: old CDN URL stored — fall back to full WAV (will be regenerated on next upload)
+      previewUrl = track.audioUrl ? await getPreviewUrl(track.audioUrl) : null;
+    } else {
+      // No preview yet — serve full WAV
+      previewUrl = track.audioUrl ? await getPreviewUrl(track.audioUrl) : null;
+    }
     const coverUrl = track.coverUrl ? await getPreviewUrl(track.coverUrl) : null;
 
     // ── Strip internal S3 keys from response ──

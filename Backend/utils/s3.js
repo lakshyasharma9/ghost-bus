@@ -115,6 +115,23 @@ function buildKey(folder, sellerId, originalName) {
 }
 
 /**
+ * Upload a raw Buffer to S3 (not a multer file — for programmatic uploads)
+ * Returns the S3 key
+ */
+export async function uploadBufferToS3(buffer, key, contentType) {
+  const command = new PutObjectCommand({
+    Bucket: getBucket(),
+    Key: key,
+    Body: buffer,
+    ContentType: contentType,
+    ContentLength: buffer.length,
+    ServerSideEncryption: 'AES256',
+  });
+  await getS3().send(command);
+  return key;
+}
+
+/**
  * Upload a file buffer to S3
  * Returns the S3 key (NOT a public URL — we use signed URLs for access)
  */

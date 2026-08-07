@@ -16,6 +16,7 @@
  */
 
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+import { uploadBufferToS3, getSignedDownloadUrl } from './s3.js';
 
 const FFMPEG_BASE = 'https://api.ffmpeg-api.com';
 const getKey = () => process.env.FFMPEG_API_KEY;
@@ -201,12 +202,29 @@ export async function generatePreviewMP3(masteredS3Key, watermarkS3Key, trackId)
     }
 
     const outputEntry = result?.result?.find(r => r.file_name === outputFile);
-    const previewUrl = outputEntry?.download_url ?? null;
+    const cdnUrl = outputEntry?.download_url ?? null;
 
-    if (!previewUrl) throw new Error('No output URL in FFmpeg response: ' + JSON.stringify(result).substring(0, 200));
+    if (!cdnUrl) throw new Error('No output URL in FFmpeg response: ' + JSON.stringify(result).substring(0, 200));
 
-    console.log(`[FFmpeg] ✅ Watermarked preview ready for track ${trackId}`);
-    return previewUrl;
+    // Download the generated preview from ffmpeg-api CDN and re-upload to our S3
+    // This is required because:
+    //   1. ffmpeg-api URLs expire
+    //   2. ffmpeg-api CDN serves audio/octet-stream which some browsers reject
+    //   3. We need the preview to be permanently stored
+    console.log(`[FFmpeg] Downloading preview from CDN and uploading to S3...`);
+    const previewRes = await fetch(cdnUrl);
+    if (!previewRes.ok) throw new Error(`Failed to download preview from CDN: ${previewRes.status}`);
+    const previewBuffer = Buffer.from(await previewRes.arrayBuffer());
+
+    const s3Key = `tracks/previews/${trackId.substring(0, 8)}-wm.mp3`;
+    await uploadBufferToS3(previewBuffer, s3Key, 'audio/mpeg');
+
+    // Get a signed URL for immediate use (1 hour)
+    const previewSignedUrl = await getSignedDownloadUrl(s3Key, 3600);
+
+    console.log(`[FFmpeg] ✅ Watermarked preview saved to S3 for track ${trackId}`);
+    // Return the S3 key — controller will store this and generate fresh signed URLs on demand
+    return s3Key;
 
   } catch (err) {
     console.error(`[FFmpeg] Preview generation failed for track ${trackId}:`, err.message);
