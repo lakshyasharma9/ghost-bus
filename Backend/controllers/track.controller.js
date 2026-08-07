@@ -806,26 +806,44 @@ async function triggerFFmpegPipeline(trackId, masteredKey, stemsKey) {
   console.log(`[FFmpeg] Starting pipeline for track ${trackId}`);
 
   try {
-    // Get signed URLs for FFmpeg API to access S3 files (2-hour TTL)
     const watermarkKey = process.env.GHOSTBUS_WATERMARK_S3_KEY || 'assets/ghostbus-watermark.mp3';
-    const [masteredUrl, stemsUrl, watermarkUrl] = await Promise.all([
-      getSignedDownloadUrl(masteredKey, 7200),
-      stemsKey ? getSignedDownloadUrl(stemsKey, 7200).catch(() => null) : Promise.resolve(null),
-      getSignedDownloadUrl(watermarkKey, 7200).catch(() => null),
-    ]);
 
-    // Run all operations in parallel for speed
-    const [duration, previewUrl, waveform, zipCheck] = await Promise.allSettled([
-      getAudioDuration(masteredUrl),
-      generatePreviewMP3(masteredUrl, watermarkUrl, trackId),
-      generateWaveformData(masteredUrl),
-      stemsUrl ? verifyZipContainsAudio(stemsUrl) : Promise.resolve({ valid: true, reason: 'No stems file' }),
-    ]);
+    // Run all operations sequentially to avoid uploading same file multiple times
+    // Each ffmpeg util now downloads directly from S3 and uploads to ffmpeg-api storage
 
-    const durationSec  = duration.status  === 'fulfilled' ? duration.value  : null;
-    const previewMp3   = previewUrl.status === 'fulfilled' ? previewUrl.value : null;
-    const waveformData = waveform.status   === 'fulfilled' ? waveform.value   : null;
-    const zipResult    = zipCheck.status   === 'fulfilled' ? zipCheck.value   : { valid: true };
+    // 1. Generate watermarked preview (most important — runs first)
+    let previewMp3 = null;
+    try {
+      previewMp3 = await generatePreviewMP3(masteredKey, watermarkKey, trackId);
+    } catch (e) {
+      console.error(`[FFmpeg] Preview failed for ${trackId}:`, e.message);
+    }
+
+    // 2. Get audio duration
+    let durationSec = null;
+    try {
+      durationSec = await getAudioDuration(masteredKey);
+    } catch (e) {
+      console.error(`[FFmpeg] Duration failed for ${trackId}:`, e.message);
+    }
+
+    // 3. Generate waveform
+    let waveformData = null;
+    try {
+      waveformData = await generateWaveformData(masteredKey);
+    } catch (e) {
+      console.error(`[FFmpeg] Waveform failed for ${trackId}:`, e.message);
+    }
+
+    // 4. Verify stems ZIP
+    let zipResult = { valid: true, reason: 'No stems file' };
+    if (stemsKey) {
+      try {
+        zipResult = await verifyZipContainsAudio(stemsKey);
+      } catch (e) {
+        console.error(`[FFmpeg] ZIP verify failed for ${trackId}:`, e.message);
+      }
+    }
 
     console.log(`[FFmpeg] Pipeline results for track ${trackId}:`, {
       duration: durationSec,
