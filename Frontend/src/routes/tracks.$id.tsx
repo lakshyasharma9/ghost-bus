@@ -153,23 +153,23 @@ function CreationProcess({ track, moreTracks }: { track: Track; moreTracks: Trac
           {tab === "overview" && (
             <div className="p-6 md:p-8">
               {/* Original & Exclusive declarations */}
-              <div className="space-y-4 mb-8">
-                <div className="flex items-start gap-3">
-                  <span className="shrink-0 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-white"
+              <div className="space-y-3 mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
+                  <span className="self-start shrink-0 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-white"
                     style={{ background: "linear-gradient(135deg, #060226 0%, #1a0f8f 100%)", boxShadow: "0 4px 15px rgba(6,2,38,0.3)" }}>
                     {track.original ? "100% Original Production" : "Contains Royalty-Free Loops"}
                   </span>
-                  <p className="text-sm text-foreground leading-relaxed pt-0.5">
-                    <strong>100% Custom-Made</strong> • <strong>Made From Scratch</strong> • <strong>No Melodic Samples Used</strong>
+                  <p className="text-sm text-foreground leading-relaxed">
+                    <strong>100% Custom-Made</strong> · <strong>Made From Scratch</strong> · <strong>No Melodic Samples Used</strong>
                   </p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <span className="shrink-0 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-white"
+                <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
+                  <span className="self-start shrink-0 px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-white"
                     style={{ background: "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)", boxShadow: "0 4px 15px rgba(124,58,237,0.3)" }}>
                     Exclusive
                   </span>
-                  <p className="text-sm text-foreground leading-relaxed pt-0.5">
-                    <strong>Full Master Rights Transfer</strong> • <strong>Sold Once</strong> • <strong>Permanently Removed from Sale</strong> • <strong>Everything Included Is Yours</strong>
+                  <p className="text-sm text-foreground leading-relaxed">
+                    <strong>Full Master Rights Transfer</strong> · <strong>Sold Once</strong> · <strong>Permanently Removed from Sale</strong> · <strong>Everything Included Is Yours</strong>
                   </p>
                 </div>
               </div>
@@ -669,30 +669,12 @@ function TrackDetail() {
 
         {/* License section */}
         <section className="mb-12">
+          {/* Mobile: copyright text first, then license table | Desktop: side by side */}
           <div className="grid md:grid-cols-2 gap-6 items-start">
-            <div className="bg-card border border-border rounded-2xl overflow-hidden">
-              <div className="flex items-center gap-1.5 px-4 py-3 border-b border-border bg-muted/40">
-                <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
-                <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
-              </div>
-              <div className="p-5">
-                <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-4">License</p>
-                <ul className="space-y-3">
-                  {["Exclusive ownership", "Full copyright transfer", "Royalty-free", "Unlimited commercial use", "Release under your name", "Seller remains anonymous"].map(item => (
-                    <li key={item} className="flex items-center gap-3 text-sm">
-                      <div className="w-5 h-5 rounded grid place-items-center shrink-0 bg-primary/10">
-                        <Lock className="w-3 h-3 text-primary" />
-                      </div>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
 
-            <div>
-              <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-tight mb-3">Full copyright transfer</h2>
+            {/* Copyright transfer — shown FIRST on mobile via order-first */}
+            <div className="order-first md:order-last">
+              <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight mb-3">Full copyright transfer</h2>
               <p className="text-foreground/70 text-sm leading-relaxed mb-5">
                 Buy and release with confidence. Every track comes with a legal copyright transfer, ensuring you're fully protected as the sole owner and backed by our team every step of the way.
               </p>
@@ -806,16 +788,38 @@ function TrackDetail() {
                 )}
               </AnimatePresence>
             </div>
+
+            {/* License table — shown SECOND on mobile (order-last), FIRST on desktop (md:order-first) */}
+            <div className="order-last md:order-first bg-card border border-border rounded-2xl overflow-hidden">
+              <div className="flex items-center gap-1.5 px-4 py-3 border-b border-border bg-muted/40">
+                <div className="w-2.5 h-2.5 rounded-full bg-red-400/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-yellow-400/60" />
+                <div className="w-2.5 h-2.5 rounded-full bg-green-400/60" />
+              </div>
+              <div className="p-5">
+                <p className="text-sm text-muted-foreground font-medium uppercase tracking-wider mb-4">License</p>
+                <ul className="space-y-3">
+                  {["Exclusive ownership", "Full copyright transfer", "Royalty-free", "Unlimited commercial use", "Release under your name", "Seller remains anonymous"].map(item => (
+                    <li key={item} className="flex items-center gap-3 text-sm">
+                      <div className="w-5 h-5 rounded grid place-items-center shrink-0 bg-primary/10">
+                        <Lock className="w-3 h-3 text-primary" />
+                      </div>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </section>
 
         {/* Security section */}
-        <section className="mb-12 py-20">
-          <div className="max-w-4xl mx-auto px-8">
-            <div className="flex flex-col md:flex-row items-start md:items-center gap-6 mb-16">
-              {/* Left side - Title with gradient opacity effect */}
+        <section className="mb-12 py-10 md:py-20">
+          <div className="max-w-4xl mx-auto px-4 md:px-8">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-4 md:gap-6 mb-10 md:mb-16">
+              {/* Left side - Title */}
               <div className="flex-shrink-0">
-                <h2 className="font-display text-5xl md:text-6xl font-bold text-primary tracking-tight relative">
+                <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-primary tracking-tight relative">
                   <span className="relative" style={{ 
                     background: 'linear-gradient(90deg, rgba(6, 2, 38, 0.25) 0%, rgba(6, 2, 38, 0.5) 25%, rgba(6, 2, 38, 0.75) 50%, rgba(6, 2, 38, 0.9) 75%, rgba(6, 2, 38, 1) 100%)',
                     WebkitBackgroundClip: 'text',
@@ -836,7 +840,7 @@ function TrackDetail() {
             </div>
 
             {/* Icons row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 ml-0 md:ml-16">
+            <div className="grid grid-cols-3 gap-6 md:gap-12 ml-0 md:ml-16">
               <div className="flex flex-col items-center gap-5 text-center">
                 <div className="text-muted-foreground/40">
                   <ScanLine className="w-16 h-16" strokeWidth={1.5} />

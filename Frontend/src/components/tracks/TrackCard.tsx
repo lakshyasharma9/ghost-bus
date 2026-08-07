@@ -56,14 +56,14 @@ export function TrackCard({ track, queue }: { track: Track; queue?: Track[] }) {
               🔥 Hot
             </span>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent sm:opacity-0 sm:group-hover:opacity-100 transition-opacity" />
           <button
             onClick={(e) => {
               e.stopPropagation();
               if (track.sold) return;
               isCurrent ? a.toggle() : a.play(track, queue);
             }}
-            className="absolute bottom-3 right-3 w-12 h-12 rounded-full bg-white text-foreground grid place-items-center shadow-[0_8px_24px_rgba(0,0,0,0.18)] opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300 hover:scale-110 active:scale-95"
+            className="absolute bottom-3 right-3 w-12 h-12 rounded-full bg-white text-foreground grid place-items-center shadow-[0_8px_24px_rgba(0,0,0,0.18)] sm:opacity-0 sm:translate-y-2 sm:group-hover:opacity-100 sm:group-hover:translate-y-0 transition-all duration-300 hover:scale-110 active:scale-95"
             aria-label="Play"
           >
             {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}

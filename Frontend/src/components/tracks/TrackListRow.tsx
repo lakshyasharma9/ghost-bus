@@ -148,9 +148,9 @@ export function TrackListRow({ track, queue }: { track: Track; queue?: Track[] }
             transition={{ duration: 0.22, ease: [0.32, 0.72, 0, 1] }}
             className="overflow-hidden"
           >
-            <div className="border-t border-border px-4 py-4 space-y-4">
-              {/* Track details */}
-              <div className="grid sm:grid-cols-3 gap-4">
+            <div className="border-t border-border px-4 py-4 space-y-3">
+              {/* Track details — Files + Bonus side by side on mobile, About below */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 <div>
                   <div className="label-eyebrow mb-2">Files Included</div>
                   <ul className="text-sm space-y-1 text-foreground/80">
@@ -168,7 +168,7 @@ export function TrackListRow({ track, queue }: { track: Track; queue?: Track[] }
                     <li>Extended Mix · Free</li>
                   </ul>
                 </div>
-                <div>
+                <div className="col-span-2 sm:col-span-1">
                   <div className="label-eyebrow mb-2">About</div>
                   <p className="text-sm text-foreground/80 leading-relaxed line-clamp-4">
                     {track.description}
