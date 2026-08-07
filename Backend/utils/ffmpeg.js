@@ -139,11 +139,11 @@ export async function generatePreviewMP3(masteredS3Key, watermarkS3Key, trackId)
   try {
     console.log(`[FFmpeg] Uploading mastered WAV to ffmpeg-api for track ${trackId}...`);
 
-    // Upload both files to ffmpeg-api storage in parallel
+    const shortId = trackId.substring(0, 8);
     const [masteredUpload, watermarkUpload] = await Promise.all([
-      s3ToFfmpeg(masteredS3Key, `mastered-${trackId}.wav`),
+      s3ToFfmpeg(masteredS3Key, `m-${shortId}.wav`),
       watermarkS3Key
-        ? s3ToFfmpeg(watermarkS3Key, `watermark-${trackId}.mp3`, null)
+        ? s3ToFfmpeg(watermarkS3Key, `w-${shortId}.mp3`, null)
         : Promise.resolve(null),
     ]);
 
@@ -156,11 +156,11 @@ export async function generatePreviewMP3(masteredS3Key, watermarkS3Key, trackId)
     let wmFilePath = watermarkUpload?.file_path ?? null;
     if (watermarkUpload && watermarkUpload.dir_id !== dir_id) {
       const { buffer, contentType } = await downloadFromS3(watermarkS3Key);
-      const reUpload = await uploadToFfmpegStorage(buffer, `watermark-${trackId}.mp3`, contentType, dir_id);
+      const reUpload = await uploadToFfmpegStorage(buffer, `w2-${shortId}.mp3`, contentType, dir_id);
       wmFilePath = reUpload.file_path;
     }
 
-    const outputFile = `preview-wm-${trackId}.mp3`;
+    const outputFile = `preview-${trackId.substring(0, 8)}.mp3`;
 
     let result;
     if (wmFilePath) {
@@ -238,8 +238,8 @@ export async function getAudioDuration(s3Key) {
 
   try {
     // Upload to ffmpeg-api first
-    const trackId = s3Key.split('/').pop().split('.')[0].substring(0, 12);
-    const { file_path } = await s3ToFfmpeg(s3Key, `probe-${trackId}.wav`);
+    const shortId = s3Key.split('/').pop().split('.')[0].substring(0, 8);
+    const { file_path } = await s3ToFfmpeg(s3Key, `pb-${shortId}.wav`);
 
     const result = await ffmpegRequest('POST', '/ffprobe/analyze', {
       file_path,
@@ -271,8 +271,8 @@ export async function generateWaveformData(s3Key) {
   if (!getKey()) return null;
 
   try {
-    const trackId = s3Key.split('/').pop().split('.')[0].substring(0, 12);
-    const { file_path } = await s3ToFfmpeg(s3Key, `waveform-probe-${trackId}.wav`);
+    const shortId = s3Key.split('/').pop().split('.')[0].substring(0, 8);
+    const { file_path } = await s3ToFfmpeg(s3Key, `wf-${shortId}.wav`);
 
     const result = await ffmpegRequest('POST', '/ffprobe/analyze', {
       file_path,
@@ -318,9 +318,9 @@ export async function verifyZipContainsAudio(s3Key) {
   if (!getKey()) return { valid: true, reason: 'FFmpeg API not configured — skipping' };
 
   try {
-    const trackId = s3Key.split('/').pop().split('.')[0].substring(0, 12);
+    const shortId = s3Key.split('/').pop().split('.')[0].substring(0, 8);
     const { buffer, contentType } = await downloadFromS3(s3Key);
-    const { file_path } = await uploadToFfmpegStorage(buffer, `stems-${trackId}.zip`, contentType);
+    const { file_path } = await uploadToFfmpegStorage(buffer, `st-${shortId}.zip`, contentType);
 
     const result = await ffmpegRequest('POST', '/ffprobe/analyze', {
       file_path,
