@@ -140,42 +140,37 @@ export async function generatePreviewMP3(masteredS3Key, watermarkS3Key, trackId)
     console.log(`[FFmpeg] Uploading mastered WAV to ffmpeg-api for track ${trackId}...`);
 
     const shortId = trackId.substring(0, 8);
-    const [masteredUpload, watermarkUpload] = await Promise.all([
-      s3ToFfmpeg(masteredS3Key, `m-${shortId}.wav`),
-      watermarkS3Key
-        ? s3ToFfmpeg(watermarkS3Key, `w-${shortId}.mp3`, null)
-        : Promise.resolve(null),
-    ]);
 
-    const wmFilePath = watermarkUpload?.file_path ?? null;
+    // Step 1: Upload mastered WAV first to get a dir_id
+    const masteredUpload = await s3ToFfmpeg(masteredS3Key, `m-${shortId}.wav`);
+    const dir_id = masteredUpload.dir_id;
+
+    // Step 2: Upload watermark TWICE into the SAME directory (needed for 0s and 15s)
+    let wmFilePath = null;
+    let wm2FilePath = null;
+    if (watermarkS3Key) {
+      const { buffer: wBuf, contentType: wCt } = await downloadFromS3(watermarkS3Key);
+      const [w1, w2] = await Promise.all([
+        uploadToFfmpegStorage(wBuf, `w1-${shortId}.mp3`, wCt, dir_id),
+        uploadToFfmpegStorage(wBuf, `w2-${shortId}.mp3`, wCt, dir_id),
+      ]);
+      wmFilePath  = w1.file_path;
+      wm2FilePath = w2.file_path;
+    }
 
     console.log(`[FFmpeg] Files uploaded. Processing watermarked preview...`);
-
-    // Use same dir_id for all files
-    const dir_id = masteredUpload.dir_id;
 
     const outputFile = `preview-${shortId}.mp3`;
 
     let result;
-    if (wmFilePath) {
-      // Upload watermark a SECOND time as a separate file (needed for 0s AND 15s instances)
-      // Both must be in the same dir as the main track
-      let wm1Path = wmFilePath;
-      let wm2Path = null;
-
-      // Re-upload watermark as wm2 in same dir
-      const { buffer: w2Buf, contentType: w2Ct } = await downloadFromS3(watermarkS3Key);
-      const wm2Upload = await uploadToFfmpegStorage(w2Buf, `w2-${shortId}.mp3`, w2Ct, dir_id);
-      wm2Path = wm2Upload.file_path;
-
-      // Watermarked preview with amix filter
-      // [out] label required in maps when using filter_complex
+    if (wmFilePath && wm2FilePath) {
+      // Watermarked preview — [out] label required in maps when using filter_complex
       result = await ffmpegRequest('POST', '/ffmpeg/process', {
         task: {
           inputs: [
             { file_path: masteredUpload.file_path }, // [0] main track
-            { file_path: wm1Path },                  // [1] watermark @ 0s
-            { file_path: wm2Path },                  // [2] watermark @ 15s
+            { file_path: wmFilePath },               // [1] watermark @ 0s
+            { file_path: wm2FilePath },              // [2] watermark @ 15s
           ],
           filter_complex: [
             '[0:a]atrim=0:30,asetpts=PTS-STARTPTS,volume=0.9[main]',
@@ -192,7 +187,7 @@ export async function generatePreviewMP3(masteredS3Key, watermarkS3Key, trackId)
         },
       });
     } else {
-      // No watermark — just trim + encode
+      // No watermark — just trim + fade out
       result = await ffmpegRequest('POST', '/ffmpeg/process', {
         task: {
           inputs: [{ file_path: masteredUpload.file_path }],
