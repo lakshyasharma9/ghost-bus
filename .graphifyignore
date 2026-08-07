@@ -1,0 +1,71 @@
+# ============================================
+# GHOSTBUS SOUND FORGE — .graphifyignore
+# Updated: May 2026
+# ============================================
+
+# --- Dependencies ---
+node_modules/
+node_modules_backup/
+
+# --- Build & Output ---
+dist/
+build/
+.next/
+coverage/
+graphify-out/
+
+# --- Frontend: Generated / Tanstack ---
+Frontend/.tanstack/
+Frontend/dist/
+Frontend/src/routeTree.gen.ts
+
+# --- Frontend: Wrangler (Cloudflare deploy) ---
+Frontend/.wrangler/
+
+# --- Frontend: Lovable config ---
+Frontend/.lovable/
+
+# --- Lock files ---
+Frontend/bun.lock
+Frontend/package-lock.json
+Backend/package-lock.json
+
+# --- Static / Media assets ---
+Frontend/public/12749811_1920_1080_25fps.mp4
+Frontend/src/assets/
+
+# --- Prisma migrations (SQL noise) ---
+Backend/prisma/migrations/
+
+# --- Env files (secrets) ---
+Backend/.env
+Backend/.env.local
+Backend/.env.example
+Frontend/.env
+
+# --- Misc config/meta files ---
+Frontend/.prettierignore
+Frontend/.prettierrc
+Frontend/netlify.toml
+Frontend/components.json
+Frontend/eslint.config.js
+Frontend/index.html
+Frontend/README.md
+Backend/README.md
+Backend/README-EXPRESS.md
+
+# --- Root-level docs (not source) ---
+ANIMATIONS_SUMMARY.md
+AUTHENTICATION_GUIDE.md
+AUTH_QUICK_START.md
+CHANGES_SUMMARY.md
+CLIENT_DEMO_GUIDE.md
+DEPLOYMENT_GUIDE.md
+DEPLOY_NOW.md
+Frontend/ghostbus _development_version v.txt
+
+# --- Git ---
+.git/
+
+# --- Shadcn/UI boilerplate (40+ generic components, not business logic) ---
+Frontend/src/components/ui/

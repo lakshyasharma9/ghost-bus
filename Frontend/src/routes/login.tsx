@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { authAPI } from "@/lib/api-client";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Sign in — GhostBus" }] }),
@@ -13,11 +14,10 @@ function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [country, setCountry] = useState("United States");
+  const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
+  const { refreshProfile } = useAuthContext();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,30 +38,41 @@ function Auth() {
     setBusy(true);
     try {
       if (tab === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data } = await authAPI.signup({
           email,
           password,
-          options: {
-            emailRedirectTo: `${window.location.origin}/`,
-            data: {
-              first_name: firstName,
-              last_name: lastName,
-              country: country,
-              role: "buyer", // All users start as buyers
-            },
-          },
+          fullName,
         });
-        if (error) throw error;
+        
+        // Store tokens
+        localStorage.setItem('accessToken', data.data.accessToken);
+        localStorage.setItem('refreshToken', data.data.refreshToken);
+        
+        // Refresh profile to update auth state
+        await refreshProfile();
+        
         toast.success("Account created! Welcome to GhostBus.");
         navigate({ to: "/" });
       } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        const { data } = await authAPI.login({
+          email,
+          password,
+        });
+        
+        // Store tokens
+        localStorage.setItem('accessToken', data.data.accessToken);
+        localStorage.setItem('refreshToken', data.data.refreshToken);
+        
+        // Refresh profile to update auth state
+        await refreshProfile();
+        
         toast.success("Welcome back!");
         navigate({ to: "/" });
       }
     } catch (err: any) {
-      toast.error(err.message ?? "Authentication failed");
+      console.error('Auth error:', err);
+      const message = err.response?.data?.message || err.message || "Authentication failed";
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -72,7 +83,7 @@ function Auth() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0A84FF] to-[#5BA7FF] grid place-items-center text-white font-bold text-lg shadow-[0_8px_24px_rgba(10,132,255,0.35)]">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#060226] to-[#1a0a5e] grid place-items-center text-white font-bold text-lg shadow-[0_8px_24px_rgba(6,2,38,0.45)]">
             G
           </div>
           <span className="font-semibold tracking-tight text-2xl">GhostBus</span>
@@ -108,26 +119,14 @@ function Auth() {
           {/* Form */}
           <form className="space-y-4" onSubmit={submit}>
             {tab === "signup" && (
-              <>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field
-                    label="First Name"
-                    type="text"
-                    placeholder="John"
-                    required
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                  />
-                  <Field
-                    label="Last Name"
-                    type="text"
-                    placeholder="Doe"
-                    required
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                  />
-                </div>
-              </>
+              <Field
+                label="Full Name"
+                type="text"
+                placeholder="John Doe"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+              />
             )}
 
             <Field
@@ -150,44 +149,20 @@ function Auth() {
             />
 
             {tab === "signup" && (
-              <>
-                <Field
-                  label="Confirm Password"
-                  type="password"
-                  placeholder="••••••••"
-                  required
-                  minLength={6}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">Country</label>
-                  <select
-                    value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="w-full h-11 px-4 rounded-xl border border-border bg-background focus:outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10 text-sm"
-                  >
-                    <option>United States</option>
-                    <option>United Kingdom</option>
-                    <option>Canada</option>
-                    <option>Australia</option>
-                    <option>Germany</option>
-                    <option>France</option>
-                    <option>Netherlands</option>
-                    <option>Spain</option>
-                    <option>Italy</option>
-                    <option>India</option>
-                    <option>Brazil</option>
-                    <option>Mexico</option>
-                  </select>
-                </div>
-              </>
+              <Field
+                label="Confirm Password"
+                type="password"
+                placeholder="••••••••"
+                required
+                minLength={6}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+              />
             )}
 
             <button
               disabled={busy}
-              className="w-full h-12 mt-2 rounded-xl bg-primary text-primary-foreground font-semibold shadow-[0_10px_30px_rgba(10,132,255,0.28)] hover:bg-[--color-primary-hover] transition disabled:opacity-60"
+              className="w-full h-12 mt-2 rounded-xl bg-primary text-primary-foreground font-semibold shadow-[0_10px_30px_rgba(6,2,38,0.35)] hover:bg-[--color-primary-hover] transition disabled:opacity-60"
             >
               {busy ? "Please wait..." : tab === "login" ? "Sign in" : "Create account"}
             </button>
@@ -195,11 +170,11 @@ function Auth() {
 
           <p className="mt-6 text-center text-xs text-muted-foreground">
             By continuing you agree to our{" "}
-            <Link to="/legal" className="underline hover:text-foreground">
-              Terms
+            <Link to="/terms" className="underline hover:text-foreground">
+              Terms &amp; Conditions
             </Link>{" "}
             and{" "}
-            <Link to="/legal" className="underline hover:text-foreground">
+            <Link to="/privacy" className="underline hover:text-foreground">
               Privacy Policy
             </Link>
             .

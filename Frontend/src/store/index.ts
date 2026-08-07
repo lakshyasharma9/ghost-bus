@@ -34,6 +34,7 @@ type AudioState = {
   setVolume: (v: number) => void;
   toggleQueue: () => void;
   enqueue: (track: Track) => void;
+  dismiss: () => void;
   _onTimeUpdate: () => void;
   _onEnded: () => void;
   _onLoadStart: () => void;
@@ -171,6 +172,13 @@ export const useAudio = create<AudioState>((set, get) => {
 
     enqueue: (track) => set((s) => ({ queue: [...s.queue, track] })),
 
+    dismiss: () => {
+      const el = getAudio();
+      el.pause();
+      el.src = "";
+      set({ current: null, isPlaying: false, progress: 0, duration: 0, queue: [], showQueue: false });
+    },
+
     _onTimeUpdate: () => {},
     _onEnded: () => {},
     _onLoadStart: () => {},
@@ -195,11 +203,13 @@ export const useCart = create<CartState>()(
       items: [],
       open: false,
       add: (track) =>
-        set((s) =>
-          s.items.find((i) => i.track.id === track.id)
+        set((s) => {
+          // Prevent adding sold tracks to cart
+          if ((track as any).sold) return s;
+          return s.items.find((i) => i.track.id === track.id)
             ? { ...s, open: true }
-            : { items: [...s.items, { track }], open: true },
-        ),
+            : { items: [...s.items, { track }], open: true };
+        }),
       remove: (id) => set((s) => ({ items: s.items.filter((i) => i.track.id !== id) })),
       clear: () => set({ items: [] }),
       setOpen: (open) => set({ open }),

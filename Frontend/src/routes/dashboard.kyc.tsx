@@ -1,104 +1,244 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
-import { ShieldCheck, Upload, CheckCircle2, Clock, AlertCircle, User, CreditCard, FileText, Loader2 } from "lucide-react";
-import { useMyKYC, useSubmitKYC, uploadFile } from "@/hooks/use-api";
-import { supabase } from "@/integrations/supabase/client";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  ShieldCheck, Upload, User, Building2, CreditCard,
+  CheckCircle2, AlertCircle, Loader2, Camera, FileText,
+  Check, Clock, XCircle
+} from "lucide-react";
 import { toast } from "sonner";
+import { userAPI } from "@/lib/api-client";
+import { useAuthContext } from "@/contexts/AuthContext";
 
 export const Route = createFileRoute("/dashboard/kyc")({
-  head: () => ({ meta: [{ title: "KYC Verification — Dashboard" }] }),
-  component: DashboardKYC,
+  head: () => ({ meta: [{ title: "Account Verification — GhostBus" }] }),
+  component: AccountVerificationPage,
 });
 
-const STEPS = [
-  { id: "identity", icon: <User className="w-5 h-5" />, label: "Identity", desc: "Government-issued ID" },
-  { id: "address", icon: <FileText className="w-5 h-5" />, label: "Address", desc: "Proof of address" },
-  { id: "payment", icon: <CreditCard className="w-5 h-5" />, label: "Payout", desc: "Bank or PayPal details" },
+const COUNTRIES = [
+  "Afghanistan", "Albania", "Algeria", "Argentina", "Armenia", "Australia", "Austria",
+  "Belgium", "Brazil", "Bulgaria", "Canada", "Chile", "China", "Colombia", "Croatia",
+  "Czech Republic", "Denmark", "Egypt", "Estonia", "Finland", "France", "Georgia",
+  "Germany", "Greece", "Hungary", "India", "Indonesia", "Ireland", "Israel", "Italy",
+  "Japan", "Jordan", "Kazakhstan", "Kenya", "Latvia", "Lithuania", "Luxembourg",
+  "Malaysia", "Mexico", "Morocco", "Netherlands", "New Zealand", "Nigeria", "Norway",
+  "Pakistan", "Peru", "Philippines", "Poland", "Portugal", "Romania", "Russia",
+  "Saudi Arabia", "Serbia", "Singapore", "Slovakia", "Slovenia", "South Africa",
+  "South Korea", "Spain", "Sweden", "Switzerland", "Thailand", "Turkey", "Ukraine",
+  "United Arab Emirates", "United Kingdom", "United States", "Vietnam",
 ];
 
-function DashboardKYC() {
-  const { data: kycRaw, isLoading } = useMyKYC();
-  const kyc = kycRaw as any;
-  const submitKYC = useSubmitKYC();
+type FileUploadState = File | null;
 
-  const [activeStep, setActiveStep] = useState(0);
-  const [idFile, setIdFile] = useState<File | null>(null);
-  const [addressFile, setAddressFile] = useState<File | null>(null);
-  const [payoutEmail, setPayoutEmail] = useState("");
-  const [uploading, setUploading] = useState(false);
+function FileDropZone({
+  label, hint, accept, file, onFile, icon
+}: {
+  label: string; hint: string; accept: string;
+  file: FileUploadState; onFile: (f: File) => void; icon: React.ReactNode;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [dragging, setDragging] = useState(false);
 
-  const handleSubmit = async () => {
-    if (!idFile || !addressFile || !payoutEmail) {
-      toast.error("Please complete all steps before submitting.");
-      return;
-    }
-    setUploading(true);
+  return (
+    <div
+      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(e) => {
+        e.preventDefault(); setDragging(false);
+        const f = e.dataTransfer.files[0];
+        if (f) onFile(f);
+      }}
+      onClick={() => ref.current?.click()}
+      className={`flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed cursor-pointer transition-all ${
+        dragging ? "border-primary bg-accent" :
+        file ? "border-primary/50 bg-accent/40" :
+        "border-border hover:border-primary/40 hover:bg-muted/50"
+      }`}
+    >
+      <input ref={ref} type="file" accept={accept} className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
+      <div className={`w-10 h-10 rounded-xl grid place-items-center shrink-0 ${
+        file ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+      }`}>
+        {file ? <Check className="w-5 h-5" /> : icon}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-sm font-medium">{label}</div>
+        <div className="text-xs text-muted-foreground truncate">
+          {file ? `${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)` : hint}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AccountVerificationPage() {
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  // Form state
+  const { user, refreshProfile } = useAuthContext();
+  const navigate = useNavigate();
+
+  // Auto-fill name from user profile
+  const fullName = (user as any)?.fullName || '';
+  const nameParts = fullName.split(' ');
+  const [form, setForm] = useState({
+    firstName: nameParts[0] || "",
+    lastName: nameParts.slice(1).join(' ') || "",
+    address: "", zip: "", city: "", country: "",
+    paypalEmail: (user as any)?.email || "", confirmed: false,
+  });
+  const [passportFile, setPassportFile] = useState<FileUploadState>(null);
+  const [licenceFile, setLicenceFile] = useState<FileUploadState>(null);
+  const [selfieFile, setSelfieFile] = useState<FileUploadState>(null);
+
+  // Load current application status on mount
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [currentStatus, setCurrentStatus] = useState<null | {
+    applicationStatus: string | null;
+    sellerVerified: boolean;
+    sellerModeEnabled: boolean;
+    kyc: { status: string; rejectionReason?: string; submittedAt: string } | null;
+  }>(null);
+
+  useEffect(() => {
+    userAPI.getSellerApplicationStatus()
+      .then((res: any) => setCurrentStatus(res.data?.data ?? res.data))
+      .catch(() => {/* no application yet */})
+      .finally(() => setStatusLoading(false));
+  }, []);
+
+  const update = (key: string, value: string | boolean) =>
+    setForm((prev) => ({ ...prev, [key]: value }));
+
+  const isValid =
+    form.firstName && form.lastName && form.address && form.zip &&
+    form.city && form.country && form.paypalEmail &&
+    passportFile && form.confirmed;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isValid) { toast.error("Please complete all required fields"); return; }
+    setSubmitting(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      // Build FormData for KYC submission (multipart with passport file)
+      const fd = new FormData();
+      fd.append('documentType', 'Passport');
+      fd.append('paypalEmail', form.paypalEmail);
+      fd.append('firstName', form.firstName);
+      fd.append('lastName', form.lastName);
+      fd.append('address', form.address);
+      fd.append('zip', form.zip);
+      fd.append('city', form.city);
+      fd.append('country', form.country);
+      if (passportFile) fd.append('avatar', passportFile);
 
-      const [idUrl, addressUrl] = await Promise.all([
-        uploadFile("tracks", `kyc/${user.id}/id.${idFile.name.split(".").pop()}`, idFile),
-        uploadFile("tracks", `kyc/${user.id}/address.${addressFile.name.split(".").pop()}`, addressFile),
-      ]);
-
-      await submitKYC.mutateAsync({ id_document_url: idUrl, address_document_url: addressUrl, payout_email: payoutEmail });
-    } catch (e: any) {
-      toast.error(e.message);
+      await userAPI.submitKyc(fd);
+      await refreshProfile();
+      setSubmitted(true);
+      toast.success("Verification submitted! Our team will review within 2–3 business days.");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? "Failed to submit. Please try again.";
+      toast.error(msg);
     } finally {
-      setUploading(false);
+      setSubmitting(false);
     }
   };
 
-  if (isLoading) {
-    return <div className="py-20 grid place-items-center"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
-  }
-
-  if (kyc?.status === "approved") {
+  // Show loading while fetching status
+  if (statusLoading) {
     return (
-      <div className="max-w-lg">
-        <div className="mb-8"><div className="label-eyebrow mb-2">KYC</div><h1 className="font-display text-3xl font-semibold tracking-tight">Identity Verification</h1></div>
-        <div className="p-8 rounded-2xl bg-emerald-50 border border-emerald-200 text-center">
-          <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto mb-4" />
-          <h2 className="font-semibold text-lg text-emerald-800">Verified ✅</h2>
-          <p className="text-sm text-emerald-700 mt-2">Your identity has been verified. You can now withdraw earnings and access all seller features.</p>
-          <div className="mt-4 text-xs text-emerald-600">Payout: {kyc.payout_method} · {kyc.payout_email}</div>
-        </div>
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
-  if (kyc?.status === "pending") {
+  // Already KYC approved — show success
+  if (currentStatus?.kyc?.status === 'APPROVED') {
     return (
-      <div className="max-w-lg">
-        <div className="mb-8"><div className="label-eyebrow mb-2">KYC</div><h1 className="font-display text-3xl font-semibold tracking-tight">Identity Verification</h1></div>
-        <div className="p-8 rounded-2xl bg-amber-50 border border-amber-200 text-center">
-          <Clock className="w-12 h-12 text-amber-500 mx-auto mb-4" />
-          <h2 className="font-semibold text-lg text-amber-800">Under Review</h2>
-          <p className="text-sm text-amber-700 mt-2">Your documents are being reviewed. This typically takes 1–2 business days.</p>
+      <div className="text-center py-16 max-w-md mx-auto">
+        <div className="w-20 h-20 mx-auto rounded-full bg-success/10 grid place-items-center mb-6">
+          <CheckCircle2 className="w-10 h-10 text-success" />
         </div>
-        <div className="mt-6 p-5 rounded-2xl bg-card border border-border">
-          <div className="label-eyebrow mb-3">Submitted Documents</div>
-          <ul className="space-y-2 text-sm">
-            {kyc.id_document_url && <li className="flex items-center gap-2 text-muted-foreground"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Government ID uploaded</li>}
-            {kyc.address_document_url && <li className="flex items-center gap-2 text-muted-foreground"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Proof of address uploaded</li>}
-            {kyc.payout_email && <li className="flex items-center gap-2 text-muted-foreground"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> Payout: {kyc.payout_email}</li>}
+        <h2 className="font-display text-2xl font-semibold mb-3">Verification Approved</h2>
+        <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+          Your identity has been verified and your seller account is fully active. You can now upload and sell tracks on GhostBus.
+        </p>
+        <button
+          onClick={() => navigate({ to: "/dashboard" })}
+          className="h-12 px-8 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-[--color-primary-hover] transition"
+        >
+          Go to Seller Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  // Pending review — show waiting state
+  if (currentStatus?.applicationStatus === 'pending') {
+    return (
+      <div className="text-center py-16 max-w-md mx-auto">
+        <div className="w-20 h-20 mx-auto rounded-full bg-amber-50 grid place-items-center mb-6">
+          <Clock className="w-10 h-10 text-amber-500" />
+        </div>
+        <h2 className="font-display text-2xl font-semibold mb-3">Application Under Review</h2>
+        <p className="text-muted-foreground text-sm leading-relaxed mb-2">
+          Your seller application has been submitted and is currently being reviewed by our team. This process typically takes 2–3 business days.
+        </p>
+        <p className="text-xs text-muted-foreground mb-8">You will receive an email notification once a decision has been made.</p>
+        <div className="p-5 rounded-2xl bg-card border border-border text-left">
+          <div className="label-eyebrow mb-3">What happens next?</div>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success shrink-0" /> Documents reviewed by our team</li>
+            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success shrink-0" /> Payouts activated on approval</li>
+            <li className="flex items-center gap-2"><AlertCircle className="w-4 h-4 text-amber-500 shrink-0" /> Seller mode enabled automatically on approval</li>
           </ul>
         </div>
       </div>
     );
   }
 
-  if (kyc?.status === "rejected") {
+  // Rejected — show rejection reason and allow re-submission
+  if (currentStatus?.applicationStatus === 'rejected') {
     return (
-      <div className="max-w-lg">
-        <div className="mb-8"><div className="label-eyebrow mb-2">KYC</div><h1 className="font-display text-3xl font-semibold tracking-tight">Identity Verification</h1></div>
-        <div className="p-6 rounded-2xl bg-red-50 border border-red-200 mb-6">
-          <h2 className="font-semibold text-red-800 mb-1">KYC Rejected</h2>
-          <p className="text-sm text-red-700">Reason: {kyc.rejection_reason ?? "Please resubmit with clearer documents."}</p>
+      <div className="text-center py-16 max-w-md mx-auto">
+        <div className="w-20 h-20 mx-auto rounded-full bg-destructive/10 grid place-items-center mb-6">
+          <XCircle className="w-10 h-10 text-destructive" />
         </div>
-        <p className="text-sm text-muted-foreground mb-4">Please resubmit your documents below.</p>
-        <KYCForm activeStep={activeStep} setActiveStep={setActiveStep} idFile={idFile} setIdFile={setIdFile} addressFile={addressFile} setAddressFile={setAddressFile} payoutEmail={payoutEmail} setPayoutEmail={setPayoutEmail} onSubmit={handleSubmit} uploading={uploading || submitKYC.isPending} />
+        <h2 className="font-display text-2xl font-semibold mb-3">Application Rejected</h2>
+        {currentStatus.kyc?.rejectionReason && (
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700 mb-6 text-left">
+            <strong>Reason:</strong> {currentStatus.kyc.rejectionReason}
+          </div>
+        )}
+        <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+          Please correct the issues above and resubmit your verification documents.
+        </p>
+      </div>
+    );
+  }
+
+  if (submitted) {
+    return (
+      <div className="text-center py-16">
+        <div className="w-20 h-20 mx-auto rounded-full bg-success/10 grid place-items-center mb-6">
+          <CheckCircle2 className="w-10 h-10 text-success" />
+        </div>
+        <h2 className="font-display text-2xl font-semibold mb-3">Verification Submitted</h2>
+        <p className="text-muted-foreground max-w-md mx-auto text-sm leading-relaxed">
+          Your Account Verification documents have been submitted. Our team will review your submission within 2–3 business days.
+          You will receive an email notification with the outcome.
+        </p>
+        <div className="mt-8 p-5 rounded-2xl bg-card border border-border max-w-sm mx-auto text-left">
+          <div className="label-eyebrow mb-3">What happens next?</div>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success shrink-0" /> Documents reviewed by our team</li>
+            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success shrink-0" /> Stripe Connect onboarding enabled</li>
+            <li className="flex items-center gap-2"><Check className="w-4 h-4 text-success shrink-0" /> Payouts activated on approval</li>
+          </ul>
+        </div>
       </div>
     );
   }
@@ -106,114 +246,155 @@ function DashboardKYC() {
   return (
     <div className="max-w-2xl">
       <div className="mb-8">
-        <div className="label-eyebrow mb-2">KYC</div>
-        <h1 className="font-display text-3xl font-semibold tracking-tight">Identity Verification</h1>
-        <p className="text-muted-foreground mt-1.5">Required to withdraw earnings and comply with financial regulations.</p>
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 grid place-items-center">
+            <ShieldCheck className="w-5 h-5 text-primary" />
+          </div>
+          <div className="label-eyebrow">Seller Dashboard</div>
+        </div>
+        <h1 className="font-display text-3xl font-semibold tracking-tight">Account Verification</h1>
+        <p className="text-muted-foreground mt-2 text-sm leading-relaxed">
+          Complete identity verification to enable payouts. Required before you can receive earnings.
+          Your information is encrypted and handled securely.
+        </p>
       </div>
-      <div className="p-5 rounded-2xl bg-accent border border-primary/20 flex items-start gap-3 mb-8">
-        <ShieldCheck className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+
+      {/* Status Banner */}
+      <div className="flex items-start gap-3 p-4 rounded-2xl bg-amber-50 border border-amber-200 mb-8">
+        <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
         <div>
-          <div className="font-medium text-sm">Why do we need this?</div>
-          <p className="text-xs text-muted-foreground mt-1">KYC is required by financial regulations to prevent fraud and ensure secure payouts. Your data is encrypted and never shared.</p>
+          <div className="text-sm font-semibold text-amber-800">Verification Required</div>
+          <div className="text-xs text-amber-700 mt-0.5">Payouts are disabled until Account Verification is approved.</div>
         </div>
       </div>
-      <KYCForm activeStep={activeStep} setActiveStep={setActiveStep} idFile={idFile} setIdFile={setIdFile} addressFile={addressFile} setAddressFile={setAddressFile} payoutEmail={payoutEmail} setPayoutEmail={setPayoutEmail} onSubmit={handleSubmit} uploading={uploading || submitKYC.isPending} />
+
+      <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Section 1: Core Identity */}
+        <section className="bg-card border border-border rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <User className="w-4 h-4 text-primary" />
+            <h2 className="font-semibold">Identity Information</h2>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Field label="First Name *" placeholder="John" value={form.firstName} onChange={(v) => update("firstName", v)} />
+            <Field label="Last Name *" placeholder="Doe" value={form.lastName} onChange={(v) => update("lastName", v)} />
+          </div>
+          <div className="mt-4 space-y-4">
+            <Field label="Address *" placeholder="123 Main Street" value={form.address} onChange={(v) => update("address", v)} />
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="ZIP / Postal Code *" placeholder="10001" value={form.zip} onChange={(v) => update("zip", v)} />
+              <Field label="City *" placeholder="New York" value={form.city} onChange={(v) => update("city", v)} />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-foreground/80 mb-1.5">Country *</label>
+              <select
+                value={form.country}
+                onChange={(e) => update("country", e.target.value)}
+                className="w-full h-11 px-4 rounded-xl border border-border bg-background focus:outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10 text-sm"
+                required
+              >
+                <option value="">Select country...</option>
+                {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+        </section>
+
+        {/* Section 2: Document Uploads */}
+        <section className="bg-card border border-border rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-2">
+            <FileText className="w-4 h-4 text-primary" />
+            <h2 className="font-semibold">Identity Documents</h2>
+          </div>
+          <p className="text-xs text-muted-foreground mb-5">Upload clear, legible photos or scans. Accepted: JPG, PNG, PDF. Max 10MB each.</p>
+          <div className="space-y-3">
+            <FileDropZone
+              label="Passport or National ID *"
+              hint="Upload a clear photo/scan of your passport or government-issued ID"
+              accept=".jpg,.jpeg,.png,.pdf"
+              file={passportFile}
+              onFile={setPassportFile}
+              icon={<FileText className="w-5 h-5" />}
+            />
+            <FileDropZone
+              label="Driving Licence (optional)"
+              hint="Upload your driving licence as additional verification"
+              accept=".jpg,.jpeg,.png,.pdf"
+              file={licenceFile}
+              onFile={setLicenceFile}
+              icon={<FileText className="w-5 h-5" />}
+            />
+            <FileDropZone
+              label="Face Selfie (optional but recommended)"
+              hint="Upload a clear selfie showing your face in good lighting"
+              accept=".jpg,.jpeg,.png"
+              file={selfieFile}
+              onFile={setSelfieFile}
+              icon={<Camera className="w-5 h-5" />}
+            />
+          </div>
+        </section>
+
+        {/* Section 3: Payout */}
+        <section className="bg-card border border-border rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <CreditCard className="w-4 h-4 text-primary" />
+            <h2 className="font-semibold">Payout Account</h2>
+          </div>
+          <Field
+            label="PayPal Email Address *"
+            placeholder="your@paypal.com"
+            type="email"
+            value={form.paypalEmail}
+            onChange={(v) => update("paypalEmail", v)}
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Earnings will be sent to this PayPal account. Make sure it matches your verified identity.
+          </p>
+        </section>
+
+        {/* Confirmation */}
+        <div className="flex items-start gap-3 p-4 rounded-2xl border border-border bg-muted/30">
+          <input
+            id="confirm"
+            type="checkbox"
+            checked={form.confirmed}
+            onChange={(e) => update("confirmed", e.target.checked)}
+            className="mt-0.5 w-4 h-4 accent-primary shrink-0"
+            required
+          />
+          <label htmlFor="confirm" className="text-sm text-foreground/80 leading-relaxed cursor-pointer">
+            I confirm that the information and documents I have provided are accurate, authentic, and belong to me.
+            I understand that false documentation may result in permanent account suspension and legal action. *
+          </label>
+        </div>
+
+        <button
+          type="submit"
+          disabled={!isValid || submitting}
+          className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold hover:bg-[--color-primary-hover] transition shadow-[0_10px_30px_rgba(6,2,38,0.35)] disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+        >
+          {submitting ? <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</> : "Submit for Verification"}
+        </button>
+      </form>
     </div>
   );
 }
 
-function KYCForm({ activeStep, setActiveStep, idFile, setIdFile, addressFile, setAddressFile, payoutEmail, setPayoutEmail, onSubmit, uploading }: any) {
+function Field({ label, placeholder, value, onChange, type = "text" }: {
+  label: string; placeholder: string; value: string;
+  onChange: (v: string) => void; type?: string;
+}) {
   return (
-    <>
-      <div className="flex gap-2 mb-8">
-        {STEPS.map((s, i) => {
-          const done = (i === 0 && idFile) || (i === 1 && addressFile) || (i === 2 && payoutEmail);
-          return (
-            <button key={s.id} onClick={() => setActiveStep(i)} className={`flex-1 p-4 rounded-2xl border-2 text-left transition-all ${activeStep === i ? "border-primary bg-accent" : done ? "border-emerald-200 bg-emerald-50" : "border-border hover:border-primary/40"}`}>
-              <div className={`w-8 h-8 rounded-xl grid place-items-center mb-2 ${done ? "bg-emerald-100 text-emerald-600" : activeStep === i ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                {done ? <CheckCircle2 className="w-4 h-4" /> : s.icon}
-              </div>
-              <div className="text-sm font-semibold">{s.label}</div>
-              <div className="text-xs text-muted-foreground">{s.desc}</div>
-            </button>
-          );
-        })}
-      </div>
-
-      {activeStep === 0 && (
-        <div className="space-y-4">
-          <h2 className="font-semibold">Government-Issued ID</h2>
-          <p className="text-sm text-muted-foreground">Upload a clear photo of your passport, national ID, or driver's license.</p>
-          <FileUploadBox label="ID Document" accept=".jpg,.jpeg,.png,.pdf" file={idFile} onFile={setIdFile} />
-          <div className="p-4 rounded-xl bg-muted/50 border border-border flex items-start gap-3">
-            <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-xs text-muted-foreground">Accepted: Passport, National ID, Driver's License. File must be clear and unedited.</p>
-          </div>
-          <button onClick={() => setActiveStep(1)} disabled={!idFile} className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40">Continue →</button>
-        </div>
-      )}
-
-      {activeStep === 1 && (
-        <div className="space-y-4">
-          <h2 className="font-semibold">Proof of Address</h2>
-          <p className="text-sm text-muted-foreground">Upload a utility bill, bank statement, or official letter dated within the last 3 months.</p>
-          <FileUploadBox label="Address Document" accept=".jpg,.jpeg,.png,.pdf" file={addressFile} onFile={setAddressFile} />
-          <div className="flex gap-3">
-            <button onClick={() => setActiveStep(0)} className="h-10 px-5 rounded-full border border-border text-sm font-medium">← Back</button>
-            <button onClick={() => setActiveStep(2)} disabled={!addressFile} className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40">Continue →</button>
-          </div>
-        </div>
-      )}
-
-      {activeStep === 2 && (
-        <div className="space-y-4">
-          <h2 className="font-semibold">Payout Details</h2>
-          <p className="text-sm text-muted-foreground">Enter your PayPal email for receiving payments.</p>
-          <div>
-            <label className="block text-xs font-medium text-foreground/80 mb-1.5">PayPal Email *</label>
-            <input type="email" placeholder="your@paypal.com" value={payoutEmail} onChange={(e) => setPayoutEmail(e.target.value)} className="w-full h-11 px-4 rounded-xl border border-border bg-background focus:outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10 text-sm" />
-          </div>
-          <div className="p-4 rounded-xl bg-muted/50 border border-border flex items-start gap-3">
-            <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
-            <p className="text-xs text-muted-foreground">Payouts processed within 2–3 business days. Minimum withdrawal: $50.</p>
-          </div>
-          <div className="flex gap-3">
-            <button onClick={() => setActiveStep(1)} className="h-10 px-5 rounded-full border border-border text-sm font-medium">← Back</button>
-            <button onClick={onSubmit} disabled={!payoutEmail || uploading} className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-sm font-medium disabled:opacity-40 inline-flex items-center gap-2">
-              {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</> : "Submit for Review"}
-            </button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-function FileUploadBox({ label, accept, file, onFile }: { label: string; accept: string; file: File | null; onFile: (f: File) => void }) {
-  const [dragging, setDragging] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  return (
-    <div
-      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
-      onDragLeave={() => setDragging(false)}
-      onDrop={(e) => { e.preventDefault(); setDragging(false); const f = e.dataTransfer.files[0]; if (f) onFile(f); }}
-      onClick={() => inputRef.current?.click()}
-      className={`p-8 rounded-2xl border-2 border-dashed cursor-pointer transition-all text-center ${dragging ? "border-primary bg-accent" : file ? "border-primary/40 bg-accent/50" : "border-border hover:border-primary/40 hover:bg-muted/50"}`}
-    >
-      <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); }} />
-      {file ? (
-        <>
-          <CheckCircle2 className="w-8 h-8 text-primary mx-auto mb-2" />
-          <div className="font-medium text-sm">{file.name}</div>
-          <div className="text-xs text-muted-foreground mt-1">{(file.size / 1024 / 1024).toFixed(2)} MB · Click to replace</div>
-        </>
-      ) : (
-        <>
-          <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-          <div className="font-medium text-sm">{label}</div>
-          <div className="text-xs text-muted-foreground mt-1">Click or drag to upload · {accept}</div>
-        </>
-      )}
+    <div>
+      <label className="block text-xs font-medium text-foreground/80 mb-1.5">{label}</label>
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-full h-11 px-4 rounded-xl border border-border bg-background focus:outline-none focus:border-primary/40 focus:ring-4 focus:ring-primary/10 text-sm"
+      />
     </div>
   );
 }

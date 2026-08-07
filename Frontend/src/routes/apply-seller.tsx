@@ -1,16 +1,53 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { motion } from 'framer-motion'
-import { useState, useRef, useEffect } from 'react'
-import { AlertTriangle, CheckCircle2, Pen, Trash2 } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { AlertTriangle, CheckCircle2, Pen, Trash2, Loader2, Clock } from 'lucide-react'
+import { toast } from 'sonner'
+import { userAPI } from '@/lib/api-client'
+import { useAuthContext } from '@/contexts/AuthContext'
+import { GENRES } from '@/lib/mock-data'
 
 export const Route = createFileRoute('/apply-seller')({
   component: ApplySellerPage,
 })
 
 function ApplySellerPage() {
+  const navigate = useNavigate()
+  const { user, loading, isAuthenticated, refreshProfile } = useAuthContext()
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [hasSignature, setHasSignature] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
+
+  // ── Auth guard: must be logged in to apply ──
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate({ to: "/login", search: { redirect: "/apply-seller" } })
+    }
+  }, [loading, isAuthenticated, navigate])
+
+  // Check if already applied — only if logged in
+  const [alreadyApplied, setAlreadyApplied] = useState<string | null>(null)
+  const [statusChecked, setStatusChecked] = useState(false)
+  useEffect(() => {
+    if (!isAuthenticated) return  // don't call API if not logged in
+    userAPI.getSellerApplicationStatus()
+      .then((res: any) => {
+        const d = res.data?.data ?? res.data
+        if (d?.applicationStatus === 'pending') setAlreadyApplied('pending')
+        else if (d?.sellerVerified) setAlreadyApplied('approved')
+        else if (d?.applicationStatus === 'rejected') setAlreadyApplied('rejected')
+      })
+      .catch(() => {})
+      .finally(() => setStatusChecked(true))
+  }, [isAuthenticated])
+
+  // Track state
+  const emptyTrack = () => ({ title: '', genre: '', bpm: '', projectFile: '', streamingLink: '', downloadLink: '' })
+  const [tracks, setTracks] = useState([emptyTrack(), emptyTrack(), emptyTrack()])
+  const updateTrack = (i: number, key: string, val: string) =>
+    setTracks(prev => prev.map((t, idx) => idx === i ? { ...t, [key]: val } : t))
 
   const [formData, setFormData] = useState({
     fullName: '',
@@ -43,55 +80,86 @@ function ApplySellerPage() {
     whyJoin: '',
   })
 
+  // ── Canvas: init with proper DPR scaling ─────────────────────────────────
+  const initCanvas = useCallback(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const dpr  = window.devicePixelRatio || 1
+    const cssW = canvas.clientWidth
+    const cssH = canvas.clientHeight
+
+    if (cssW === 0 || cssH === 0) return // not laid out yet
+
+    // Set internal buffer = CSS size × DPR
+    canvas.width  = cssW * dpr
+    canvas.height = cssH * dpr
+
+    // Scale all draw calls so coordinates match CSS pixels exactly
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+    ctx.strokeStyle = '#1a1a1a'
+    ctx.lineWidth   = 2.5
+    ctx.lineCap     = 'round'
+    ctx.lineJoin    = 'round'
+  }, [])
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    // Use ResizeObserver — fires when canvas has actual layout dimensions
+    const ro = new ResizeObserver(() => {
+      initCanvas()
+    })
+    ro.observe(canvas)
+    return () => ro.disconnect()
+  }, [initCanvas])
 
-    // Set canvas size
-    canvas.width = canvas.offsetWidth
-    canvas.height = canvas.offsetHeight
-
-    // Set drawing style
-    ctx.strokeStyle = '#000'
-    ctx.lineWidth = 2
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
-  }, [])
+  // ── Accurate coords: CSS pixels relative to canvas ───────────────────────
+  const getCoords = (
+    e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>,
+    canvas: HTMLCanvasElement
+  ) => {
+    const rect = canvas.getBoundingClientRect()
+    if ('touches' in e) {
+      return {
+        x: e.touches[0].clientX - rect.left,
+        y: e.touches[0].clientY - rect.top,
+      }
+    }
+    return {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    }
+  }
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
     const canvas = canvasRef.current
     if (!canvas) return
-
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
     setIsDrawing(true)
     setHasSignature(true)
 
-    const rect = canvas.getBoundingClientRect()
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top
-
+    const { x, y } = getCoords(e, canvas)
     ctx.beginPath()
     ctx.moveTo(x, y)
   }
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault()
     if (!isDrawing) return
-
     const canvas = canvasRef.current
     if (!canvas) return
-
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const rect = canvas.getBoundingClientRect()
-    const x = 'touches' in e ? e.touches[0].clientX - rect.left : e.clientX - rect.left
-    const y = 'touches' in e ? e.touches[0].clientY - rect.top : e.clientY - rect.top
-
+    const { x, y } = getCoords(e, canvas)
     ctx.lineTo(x, y)
     ctx.stroke()
   }
@@ -101,26 +169,159 @@ function ApplySellerPage() {
   }
 
   const clearSignature = () => {
-    const canvas = canvasRef.current
-    if (!canvas) return
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    initCanvas()
     setHasSignature(false)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
     if (!hasSignature) {
-      alert('Please provide your digital signature before submitting.')
+      toast.error('Please provide your digital signature before submitting.')
       return
     }
+    setSubmitting(true)
+    try {
+      // Parse tracks from state
+      const parsedTracks = tracks.map((t, i) => ({
+        trackNumber: i + 1,
+        title: t.title,
+        genre: t.genre,
+        bpm: t.bpm,
+        projectFile: t.projectFile,
+        streamingLink: t.streamingLink,
+        downloadLink: t.downloadLink,
+      }))
 
-    console.log('Form submitted:', formData)
-    alert('Application submitted! Our team will review within 2-3 business days.')
+      // Get signature as base64 data URL from canvas
+      const signatureDataUrl = canvasRef.current?.toDataURL('image/png') || ''
+
+      // Send the complete application as a clean flat JSON body
+      // Backend stores req.body directly in bio field
+      await userAPI.submitSellerApplication({
+        firstName: formData.fullName.split(' ')[0] || formData.fullName,
+        lastName: formData.fullName.split(' ').slice(1).join(' ') || '-',
+        address: formData.address,
+        zip: '-',
+        city: '-',
+        country: formData.country,
+        paypalEmail: formData.email,
+        documentType: 'SellerApplication',
+        // All applicant fields
+        fullName: formData.fullName,
+        artistAlias: formData.artistAlias,
+        labelName: formData.labelName,
+        phone: formData.phone,
+        altPhone: formData.altPhone,
+        businessEmail: formData.email,
+        spotify: formData.spotify,
+        instagram: formData.instagram,
+        soundcloud: formData.soundcloud,
+        youtube: formData.youtube,
+        otherLinks: formData.otherLinks,
+        // Rights verification
+        soleCreator: formData.soleCreator,
+        everUploaded: formData.everUploaded,
+        everUploadedDetails: formData.everUploadedDetails,
+        usedAI: formData.usedAI,
+        usedAIDetails: formData.usedAIDetails,
+        samplesLicensed: formData.samplesLicensed,
+        canProvideFiles: formData.canProvideFiles,
+        understandAnonymity: formData.understandAnonymity,
+        copyrightStrikes: formData.copyrightStrikes,
+        copyrightStrikesDetails: formData.copyrightStrikesDetails,
+        acknowledgeFraud: formData.acknowledgeFraud,
+        labelQuality: formData.labelQuality,
+        whyJoin: formData.whyJoin,
+        // Tracks as JSON string
+        tracksData: JSON.stringify(parsedTracks),
+        // Digital signature as base64 data URL
+        signature: signatureDataUrl,
+      } as any)
+
+      await refreshProfile()
+      setSubmitted(true)
+      toast.success('Application submitted! Our team will review within 2–3 business days.')
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? 'Failed to submit. Please try again.'
+      toast.error(msg)
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // ── Auth loading guard — wait for auth to resolve, then redirect if not logged in ──
+  if (loading || (!isAuthenticated && !statusChecked)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  // ── If not authenticated, redirect handled by useEffect above; show spinner ──
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  // ── Loading guard — prevents form flash before status is known ──
+  if (!statusChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  // Already applied — show appropriate status screen
+  if (alreadyApplied === 'pending' || submitted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto rounded-full bg-amber-50 grid place-items-center mb-6">
+            <Clock className="w-10 h-10 text-amber-500" />
+          </div>
+          <h2 className="font-display text-2xl font-semibold mb-3">Application Under Review</h2>
+          <p className="text-muted-foreground text-sm leading-relaxed mb-2">
+            Your seller application has been submitted and is currently being reviewed by our team. This process typically takes 2–3 business days.
+          </p>
+          <p className="text-xs text-muted-foreground mb-8">You will receive an email notification once a decision has been made.</p>
+          <div className="p-5 rounded-2xl bg-card border border-border text-left">
+            <div className="label-eyebrow mb-3">What happens next?</div>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-success shrink-0" /> Application reviewed by our A&R team</li>
+              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-success shrink-0" /> Track submissions evaluated for quality</li>
+              <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-success shrink-0" /> Seller dashboard unlocked on approval</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (alreadyApplied === 'approved') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-4">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 mx-auto rounded-full bg-success/10 grid place-items-center mb-6">
+            <CheckCircle2 className="w-10 h-10 text-success" />
+          </div>
+          <h2 className="font-display text-2xl font-semibold mb-3">You are a Verified Seller</h2>
+          <p className="text-muted-foreground text-sm leading-relaxed mb-6">
+            Your seller account is fully active. You can upload and sell tracks on GhostBus.
+          </p>
+          <button
+            onClick={() => navigate({ to: '/dashboard' })}
+            className="h-12 px-8 rounded-full bg-primary text-primary-foreground font-semibold hover:bg-[--color-primary-hover] transition"
+          >
+            Go to Seller Dashboard
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -472,31 +673,41 @@ function ApplySellerPage() {
               <h2 className="text-2xl font-bold mb-6 text-primary font-display">UNRELEASED TRACK SUBMISSION PORTAL</h2>
               <p className="text-muted-foreground mb-8">Upload your top 3 unreleased tracks for review</p>
               
-              {[1, 2, 3].map((num) => (
-                <div key={num} className="mb-8 pb-8 border-b border-border last:border-b-0">
-                  <h3 className="text-lg font-semibold mb-4">TRACK #{num}</h3>
+              {[0, 1, 2].map((idx) => (
+                <div key={idx} className="mb-8 pb-8 border-b border-border last:border-b-0">
+                  <h3 className="text-lg font-semibold mb-4">TRACK #{idx + 1}</h3>
                   <div className="grid md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-sm font-semibold mb-2">Title *</label>
                       <input
                         type="text"
                         required
+                        value={tracks[idx].title}
+                        onChange={(e) => updateTrack(idx, 'title', e.target.value)}
                         className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold mb-2">Genre *</label>
-                      <input
-                        type="text"
+                      <select
                         required
-                        className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      />
+                        value={tracks[idx].genre}
+                        onChange={(e) => updateTrack(idx, 'genre', e.target.value)}
+                        className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none cursor-pointer"
+                      >
+                        <option value="">Select a genre…</option>
+                        {GENRES.map((g) => (
+                          <option key={g} value={g}>{g}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold mb-2">BPM *</label>
                       <input
                         type="number"
                         required
+                        value={tracks[idx].bpm}
+                        onChange={(e) => updateTrack(idx, 'bpm', e.target.value)}
                         className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
@@ -504,11 +715,11 @@ function ApplySellerPage() {
                       <label className="block text-sm font-semibold mb-2">Project File Available? *</label>
                       <div className="flex gap-4 mt-3">
                         <label className="flex items-center gap-2">
-                          <input type="radio" name={`track${num}ProjectFile`} value="YES" required className="w-4 h-4 text-primary" />
+                          <input type="radio" name={`track${idx}ProjectFile`} value="YES" required onChange={(e) => updateTrack(idx, 'projectFile', e.target.value)} className="w-4 h-4 text-primary" />
                           <span>YES</span>
                         </label>
                         <label className="flex items-center gap-2">
-                          <input type="radio" name={`track${num}ProjectFile`} value="NO" required className="w-4 h-4 text-primary" />
+                          <input type="radio" name={`track${idx}ProjectFile`} value="NO" required onChange={(e) => updateTrack(idx, 'projectFile', e.target.value)} className="w-4 h-4 text-primary" />
                           <span>NO</span>
                         </label>
                       </div>
@@ -519,6 +730,8 @@ function ApplySellerPage() {
                         type="url"
                         required
                         placeholder="SoundCloud private link, Google Drive, etc."
+                        value={tracks[idx].streamingLink}
+                        onChange={(e) => updateTrack(idx, 'streamingLink', e.target.value)}
                         className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
@@ -528,6 +741,8 @@ function ApplySellerPage() {
                         type="url"
                         required
                         placeholder="Google Drive, Dropbox, WeTransfer, etc."
+                        value={tracks[idx].downloadLink}
+                        onChange={(e) => updateTrack(idx, 'downloadLink', e.target.value)}
                         className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                       />
                     </div>
@@ -612,9 +827,14 @@ function ApplySellerPage() {
 
               <button
                 type="submit"
-                className="w-full py-4 bg-primary hover:bg-primary-hover text-primary-foreground rounded-full font-semibold text-lg transition-all shadow-lift"
+                disabled={submitting}
+                className="w-full py-4 bg-primary hover:bg-[--color-primary-hover] text-primary-foreground rounded-full font-semibold text-lg transition-all shadow-lift disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Submit Application
+                {submitting ? (
+                  <><Loader2 className="w-5 h-5 animate-spin" /> Submitting Application…</>
+                ) : (
+                  'Submit Application'
+                )}
               </button>
             </div>
           </form>

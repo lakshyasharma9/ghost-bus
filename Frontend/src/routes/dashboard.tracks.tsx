@@ -30,7 +30,8 @@ function DashboardTracks() {
   const [tab, setTab] = useState<StatusFilter>("all");
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-  const { data: tracks = [], isLoading } = useMyTracks();
+  const { data: tracksData, isLoading } = useMyTracks();
+  const tracks: any[] = Array.isArray(tracksData) ? tracksData : [];
   const deleteTrack = useDeleteTrack();
 
   const filtered = tab === "all" ? (tracks as any[]) : (tracks as any[]).filter((t) => t.status === tab);
@@ -48,7 +49,7 @@ function DashboardTracks() {
           <div className="label-eyebrow mb-2">Tracks</div>
           <h1 className="font-display text-3xl font-semibold tracking-tight">My Tracks</h1>
         </div>
-        <Link to="/dashboard/upload" className="h-10 px-5 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-[0_8px_24px_rgba(10,132,255,0.28)]">
+        <Link to="/dashboard/upload" className="h-10 px-5 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-[0_8px_24px_rgba(6,2,38,0.35)]">
           <Plus className="w-4 h-4" /> Upload New
         </Link>
       </div>
@@ -80,7 +81,7 @@ function DashboardTracks() {
                   <th className="px-4 py-3">Track</th>
                   <th className="px-4 py-3 hidden md:table-cell">Genre</th>
                   <th className="px-4 py-3 hidden sm:table-cell">Price</th>
-                  <th className="px-4 py-3 hidden lg:table-cell">Views</th>
+                  <th className="px-4 py-3 hidden lg:table-cell">Likes</th>
                   <th className="px-4 py-3 hidden lg:table-cell">Plays</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3 text-right">Actions</th>
@@ -91,20 +92,20 @@ function DashboardTracks() {
                   <tr key={track.id} className="border-t border-border hover:bg-muted/30 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-lg shrink-0 bg-muted" style={track.artwork_url ? { backgroundImage: `url(${track.artwork_url})`, backgroundSize: "cover" } : {}} />
+                        <div className="w-9 h-9 rounded-lg shrink-0 bg-muted" style={track.coverUrl ? { backgroundImage: `url(${track.coverUrl})`, backgroundSize: "cover" } : {}} />
                         <div>
                           <div className="font-medium leading-tight">{track.title}</div>
-                          <div className="text-xs text-muted-foreground">{track.bpm} BPM · {track.musical_key}</div>
+                          <div className="text-xs text-muted-foreground">{track.bpm} BPM · {track.key}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{track.genre}</td>
-                    <td className="px-4 py-3 font-semibold hidden sm:table-cell">${track.price}</td>
-                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{(track.views ?? 0).toLocaleString()}</td>
-                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{(track.plays ?? 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 font-semibold hidden sm:table-cell">€{track.price}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{(track.likesCount ?? 0).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{(track.playsCount ?? 0).toLocaleString()}</td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${STATUS_STYLES[track.status] ?? "bg-muted text-muted-foreground"}`}>
-                        {track.status === "approved" ? "live" : track.status}
+                        {track.status === "approved" ? "live" : track.status === "sold" ? "sold" : track.status}
                       </span>
                     </td>
                     <td className="px-4 py-3">

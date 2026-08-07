@@ -27,7 +27,7 @@ function DashboardEarnings() {
       return;
     }
     if (pendingPayout < 50) {
-      toast.error("Minimum withdrawal is ₹50.");
+      toast.error("Minimum withdrawal is €50.");
       return;
     }
     setWithdrawing(true);
@@ -49,9 +49,9 @@ function DashboardEarnings() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
-          { icon: <DollarSign className="w-4 h-4" />, label: "Total Earned", value: `₹${(stats?.total_earned ?? 0).toLocaleString()}`, sub: "All time" },
-          { icon: <TrendingUp className="w-4 h-4" />, label: "This Month", value: `₹${(stats?.earned_this_month ?? 0).toLocaleString()}`, sub: "Current month" },
-          { icon: <Clock className="w-4 h-4" />, label: "Pending Payout", value: `₹${Math.max(0, pendingPayout).toLocaleString()}`, sub: "Available to withdraw" },
+          { icon: <DollarSign className="w-4 h-4" />, label: "Total Earned", value: `€${(stats?.total_earned ?? 0).toLocaleString()}`, sub: "All time" },
+          { icon: <TrendingUp className="w-4 h-4" />, label: "This Month", value: `€${(stats?.earned_this_month ?? 0).toLocaleString()}`, sub: "Current month" },
+          { icon: <Clock className="w-4 h-4" />, label: "Pending Payout", value: `€${Math.max(0, pendingPayout).toLocaleString()}`, sub: "Available to withdraw" },
           { icon: <CheckCircle2 className="w-4 h-4" />, label: "Tracks Sold", value: stats?.sold_tracks ?? 0, sub: "Lifetime" },
         ].map((s) => (
           <div key={s.label} className="p-5 rounded-2xl bg-card border border-border">
@@ -70,7 +70,7 @@ function DashboardEarnings() {
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div>
             <div className="label-eyebrow mb-1">Available Balance</div>
-            <div className="text-3xl font-semibold">₹{Math.max(0, pendingPayout).toLocaleString()}</div>
+            <div className="text-3xl font-semibold">€{Math.max(0, pendingPayout).toLocaleString()}</div>
             {kyc?.status !== "approved" && (
               <p className="text-xs text-amber-600 mt-1">Complete KYC verification to withdraw</p>
             )}
@@ -78,7 +78,7 @@ function DashboardEarnings() {
           <button
             onClick={handleWithdraw}
             disabled={withdrawing || requestWithdrawal.isPending || pendingPayout < 50 || kyc?.status !== "approved"}
-            className="h-11 px-6 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-[0_8px_24px_rgba(10,132,255,0.28)] disabled:opacity-50 inline-flex items-center gap-2"
+            className="h-11 px-6 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-[0_8px_24px_rgba(6,2,38,0.35)] disabled:opacity-50 inline-flex items-center gap-2"
           >
             {(withdrawing || requestWithdrawal.isPending) ? <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</> : "Request Withdrawal"}
           </button>
@@ -115,9 +115,9 @@ function DashboardEarnings() {
                     <td className="px-4 py-3 font-medium">{o.tracks?.title ?? "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">{o.profiles?.display_name ?? "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground hidden sm:table-cell">{new Date(o.created_at).toLocaleDateString()}</td>
-                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">₹{o.amount}</td>
-                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">-₹{o.platform_fee}</td>
-                    <td className="px-4 py-3 font-semibold text-primary">₹{o.seller_payout}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">€{o.amount}</td>
+                    <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">-€{o.platform_fee}</td>
+                    <td className="px-4 py-3 font-semibold text-primary">€{o.seller_payout}</td>
                     <td className="px-4 py-3">
                       <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600">{o.status}</span>
                     </td>

@@ -5,6 +5,11 @@ import type { Track } from "@/lib/mock-data";
 import { useAudio, useCart, useWishlist } from "@/store";
 import { Waveform } from "@/components/audio/Waveform";
 
+/** Convert "Nova Reign" → "nova-reign" for profile links on mock tracks */
+function toSlug(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 export function TrackCard({ track, queue }: { track: Track; queue?: Track[] }) {
   const a = useAudio();
   const cart = useCart();
@@ -12,17 +17,35 @@ export function TrackCard({ track, queue }: { track: Track; queue?: Track[] }) {
   const isCurrent = a.current?.id === track.id;
   const isPlaying = isCurrent && a.isPlaying;
 
+  // Real API tracks have seller.username or seller.id; mock tracks get a slugified producer name
+  const sellerUsername: string | null =
+    (track as any).seller?.username
+    ?? (track as any).seller?.id
+    ?? ((track as any).sellerUsername)
+    ?? (track.producer ? toSlug(track.producer) : null);
+
   return (
     <motion.div
       whileHover={{ y: -6, scale: 1.01 }}
       transition={{ type: "spring", stiffness: 400, damping: 25 }}
-      className={`group relative bg-card rounded-2xl border border-border overflow-hidden hover:shadow-[0_20px_50px_rgba(10,132,255,0.15)] hover:border-primary/30 transition-all duration-300 ${track.sold ? "opacity-60" : ""}`}
+      className={`group relative bg-card rounded-lg border border-border overflow-hidden hover:shadow-[0_20px_50px_rgba(6,2,38,0.18)] hover:border-primary/30 transition-all duration-300 ${track.sold ? "opacity-60" : ""}`}
     >
-      <Link to="/tracks/$id" params={{ id: track.id }} className="block">
+      <div
+        className="block cursor-pointer"
+        onClick={() => {
+          if (track.sold) return;
+          isCurrent ? a.toggle() : a.play(track, queue);
+        }}
+      >
         <div
-          className="relative aspect-square w-full bg-cover bg-center"
-          style={{ backgroundImage: `url(${track.artwork})` }}
+          className="relative aspect-square w-full bg-cover bg-center bg-muted"
+          style={track.artwork ? { backgroundImage: `url(${track.artwork})` } : {}}
         >
+          {!track.artwork && (
+            <div className="absolute inset-0 grid place-items-center">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#060226] to-[#1a0a5e] grid place-items-center text-white font-bold text-lg">G</div>
+            </div>
+          )}
           {track.sold && (
             <div className="absolute inset-0 grid place-items-center">
               <span className="px-3 py-1 rounded-full bg-foreground/80 text-background text-xs font-semibold tracking-widest uppercase">Sold</span>
@@ -36,7 +59,7 @@ export function TrackCard({ track, queue }: { track: Track; queue?: Track[] }) {
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           <button
             onClick={(e) => {
-              e.preventDefault();
+              e.stopPropagation();
               if (track.sold) return;
               isCurrent ? a.toggle() : a.play(track, queue);
             }}
@@ -46,15 +69,29 @@ export function TrackCard({ track, queue }: { track: Track; queue?: Track[] }) {
             {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
           </button>
         </div>
-      </Link>
+      </div>
 
       <div className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <Link to="/tracks/$id" params={{ id: track.id }} className="block font-semibold truncate hover:text-primary">
+            <Link to="/tracks/$id" params={{ id: track.id }} className="block font-semibold truncate hover:text-primary transition-colors">
               {track.title}
             </Link>
-            <div className="text-xs text-muted-foreground truncate mt-0.5">{track.label} · {track.producer}</div>
+            <div className="text-xs text-muted-foreground truncate mt-0.5">
+              {track.label}{" · "}
+              {sellerUsername ? (
+                <Link
+                  to="/sellers/$username"
+                  params={{ username: sellerUsername }}
+                  className="hover:text-primary hover:underline transition-colors"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {track.producer}
+                </Link>
+              ) : (
+                track.producer
+              )}
+            </div>
           </div>
           <button
             onClick={() => wl.toggle(track.id)}
@@ -76,7 +113,7 @@ export function TrackCard({ track, queue }: { track: Track; queue?: Track[] }) {
         </div>
 
         <div className="flex items-center justify-between pt-1">
-          <span className="text-lg font-semibold tracking-tight">₹{track.price}</span>
+          <span className="text-lg font-semibold tracking-tight">€{track.price}</span>
           <button
             disabled={track.sold}
             onClick={() => cart.add(track)}

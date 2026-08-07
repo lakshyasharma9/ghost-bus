@@ -1,13 +1,56 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, ListMusic, ShoppingBag, Heart, Loader2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, ListMusic, ShoppingBag, Heart, Loader2, X } from "lucide-react";
 import { useAudio, useCart, useWishlist } from "@/store";
 import { Waveform } from "@/components/audio/Waveform";
+import { useRef } from "react";
+
+function VolumeSlider({ volume, onChange }: { volume: number; onChange: (v: number) => void }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  const calcVolume = (e: React.MouseEvent | MouseEvent) => {
+    const rect = trackRef.current!.getBoundingClientRect();
+    const raw = (e.clientX - rect.left) / rect.width;
+    return Math.min(1, Math.max(0, raw));
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    onChange(calcVolume(e));
+    const onMove = (ev: MouseEvent) => onChange(calcVolume(ev));
+    const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  return (
+    <div
+      ref={trackRef}
+      onMouseDown={handleMouseDown}
+      className="relative w-20 h-4 flex items-center cursor-pointer group"
+      role="slider"
+      aria-valuenow={Math.round(volume * 100)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
+      {/* Track */}
+      <div className="w-full h-[3px] rounded-full bg-border overflow-hidden">
+        <div
+          className="h-full rounded-full bg-primary transition-none"
+          style={{ width: `${volume * 100}%` }}
+        />
+      </div>
+      {/* Thumb */}
+      <div
+        className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-primary shadow-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"
+        style={{ left: `calc(${volume * 100}% - 5px)` }}
+      />
+    </div>
+  );
+}
 
 export function GlobalAudioPlayer() {
   const a = useAudio();
   const cart = useCart();
   const wl = useWishlist();
-
   const fmtTime = (secs: number) => {
     const s = Math.floor(secs);
     return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -161,18 +204,7 @@ export function GlobalAudioPlayer() {
                   : <Volume2 className="w-4 h-4" />
                 }
               </button>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.01}
-                value={a.volume}
-                onChange={(e) => a.setVolume(parseFloat(e.target.value))}
-                className="w-20 h-1 accent-primary cursor-pointer"
-                style={{
-                  background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${a.volume * 100}%, var(--color-muted) ${a.volume * 100}%, var(--color-muted) 100%)`
-                }}
-              />
+              <VolumeSlider volume={a.volume} onChange={a.setVolume} />
 
               {/* Wishlist */}
               <button
@@ -189,7 +221,7 @@ export function GlobalAudioPlayer() {
                 className="h-9 px-4 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:bg-[--color-primary-hover] inline-flex items-center gap-2 shadow-[0_6px_18px_rgba(10,132,255,0.28)] transition-colors"
               >
                 <ShoppingBag className="w-4 h-4" />
-                ₹{a.current.price}
+                €{a.current.price}
               </button>
 
               {/* Queue Toggle */}
@@ -201,6 +233,15 @@ export function GlobalAudioPlayer() {
                 }`}
               >
                 <ListMusic className="w-4 h-4" />
+              </button>
+
+              {/* Dismiss / Close */}
+              <button
+                onClick={a.dismiss}
+                aria-label="Close player"
+                className="w-9 h-9 grid place-items-center rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
           </div>

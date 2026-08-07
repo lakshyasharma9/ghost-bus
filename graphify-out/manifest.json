@@ -1,0 +1,437 @@
+{
+  "E:\\ghostbus-sound-forge-main\\Backend\\package.json": {
+    "mtime": 1779049887.825925,
+    "ast_hash": "3eb230522916e23e50f8dd75a8948b9c",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\server.js": {
+    "mtime": 1779135076.6813855,
+    "ast_hash": "5efbd9ad30bca91058e71ff3edece85b",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\config\\database.js": {
+    "mtime": 1779049992.758059,
+    "ast_hash": "2c6bb02f5ec5bcc1560b9cc5bab4bdc0",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\controllers\\auth.controller.js": {
+    "mtime": 1779050387.959298,
+    "ast_hash": "943e58061705845ab8a585d90d7a6dcb",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\controllers\\user.controller.js": {
+    "mtime": 1779054279.7401197,
+    "ast_hash": "3eb3cd21754a2e3f10bee41a04826fa6",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\middleware\\auth.middleware.js": {
+    "mtime": 1779050369.0118937,
+    "ast_hash": "253a01a0f878159b01f7618d466595cc",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\middleware\\rateLimit.middleware.js": {
+    "mtime": 1779134922.3889825,
+    "ast_hash": "e8a465667e00127049c43b40a7df297d",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\middleware\\upload.middleware.js": {
+    "mtime": 1779134911.7113557,
+    "ast_hash": "299659605f21a935f603f483927e671d",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\routes\\auth.routes.js": {
+    "mtime": 1779050408.8471282,
+    "ast_hash": "3edbc6308563f7f8722a93a5d5030d1e",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\routes\\user.routes.js": {
+    "mtime": 1779054288.926126,
+    "ast_hash": "4b14831722c1cf99aaffc4bf6a36c920",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\utils\\bcrypt.js": {
+    "mtime": 1779050348.0211558,
+    "ast_hash": "75728413d0619fbf2e2d442c8c0cd93e",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\utils\\jwt.js": {
+    "mtime": 1779050337.7953453,
+    "ast_hash": "419795672e4be50ed574daf452f0ca74",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\utils\\response.js": {
+    "mtime": 1779050358.2859547,
+    "ast_hash": "01914bdee2c23b792c96be286f307de5",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\utils\\s3.js": {
+    "mtime": 1779134894.5277302,
+    "ast_hash": "fd3d82e41443c53723f4b330b57aec8b",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\package.json": {
+    "mtime": 1779051554.2889113,
+    "ast_hash": "aebdc93a5fa4747b2dcdd3d25e72a996",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\tsconfig.json": {
+    "mtime": 1778533534.3025217,
+    "ast_hash": "994abf64c2b9f78b568879f80ed0170e",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\vercel.json": {
+    "mtime": 1778956515.7523837,
+    "ast_hash": "61bd31a2b0ac08f10f13c932b32d6ca1",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\vite.config.ts": {
+    "mtime": 1778965804.1772008,
+    "ast_hash": "d6cedf83c9fe46cdafc6f5f21795d128",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\main.tsx": {
+    "mtime": 1779034036.202616,
+    "ast_hash": "4d6d28c15c5aa6f0a5f55a59877aaf7e",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\router.tsx": {
+    "mtime": 1778965827.3766768,
+    "ast_hash": "3de665cf5c0cd8b7cceff063b0fda7a3",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\components\\SmoothScroll.tsx": {
+    "mtime": 1778593402.85219,
+    "ast_hash": "af6be8ba000b231f7e879feab8c08db3",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\components\\audio\\GlobalAudioPlayer.tsx": {
+    "mtime": 1778870832.022346,
+    "ast_hash": "a685fcb983b52c576adb9a96eea4a682",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\components\\audio\\Waveform.tsx": {
+    "mtime": 1778870405.399634,
+    "ast_hash": "1f0328de51b1e1310b1b1e6c6cb4c894",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\components\\auth\\ProtectedRoute.tsx": {
+    "mtime": 1779033845.997323,
+    "ast_hash": "cbfb42fecd2f46522f1f6b752402c238",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\components\\auth\\SellerModeToggle.tsx": {
+    "mtime": 1779038468.780615,
+    "ast_hash": "3d31503d3039bb45bab0c23578ef3d47",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\components\\cart\\CartDrawer.tsx": {
+    "mtime": 1779055564.57185,
+    "ast_hash": "a3035d4ce5694ac5297c0995af49bc74",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\components\\layout\\Footer.tsx": {
+    "mtime": 1778533534.473445,
+    "ast_hash": "f3322a09bc8f5da56ead9c27aae72e54",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\components\\layout\\Navbar.tsx": {
+    "mtime": 1779054946.2225094,
+    "ast_hash": "bf672d1899cf5af1b1d938ac14111a5e",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\components\\tracks\\TrackCard.tsx": {
+    "mtime": 1778593472.6555524,
+    "ast_hash": "39c8415912260c6a2cc359745d115010",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\components\\tracks\\TrackListRow.tsx": {
+    "mtime": 1778870843.761677,
+    "ast_hash": "06b5d2b011179248d9dab316f40ab5ad",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\contexts\\AuthContext.tsx": {
+    "mtime": 1779055821.2006352,
+    "ast_hash": "91578d896256d67350eef665d35478a6",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\hooks\\use-api.ts": {
+    "mtime": 1779055792.7877882,
+    "ast_hash": "5054b5081af1e5e2e8db7e205e037326",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\hooks\\use-mobile.tsx": {
+    "mtime": 1778533534.8929102,
+    "ast_hash": "c0a0bdd4638c391a1dd06ac82074e60b",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\lib\\api-client.ts": {
+    "mtime": 1779054304.2446005,
+    "ast_hash": "e2c25f9ac2907be2653be551c6bf49f0",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\lib\\error-capture.ts": {
+    "mtime": 1778533534.9720306,
+    "ast_hash": "00e77bfacfb2d79c0816361e678f1b65",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\lib\\error-page.ts": {
+    "mtime": 1778533534.9797688,
+    "ast_hash": "8da0ddd7569bac2676b9a5c8edff8a36",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\lib\\mock-data.ts": {
+    "mtime": 1778592794.6085832,
+    "ast_hash": "1a0ab60b938e3fb37a576e83b29e9ad0",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\lib\\utils.ts": {
+    "mtime": 1778533534.9977295,
+    "ast_hash": "d9837f38cc05303254571985e3164050",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\account.favorites.tsx": {
+    "mtime": 1778933288.9808857,
+    "ast_hash": "0c462fc0e50b3b3a28002301451ce77b",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\account.following.tsx": {
+    "mtime": 1778933302.2413826,
+    "ast_hash": "f333b5f1f78cb8e943ee2f048fba2589",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\account.index.tsx": {
+    "mtime": 1779054324.6571162,
+    "ast_hash": "36e7584ccb70d79ee9519d2f54653c34",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\account.mailing.tsx": {
+    "mtime": 1778933340.5761952,
+    "ast_hash": "cf00a1626607e6ca9ce27295edcbbac8",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\account.orders.tsx": {
+    "mtime": 1778933278.4735417,
+    "ast_hash": "07037089ad0c5ad5fcaa54a862ac9027",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\account.profile.tsx": {
+    "mtime": 1779055464.3289437,
+    "ast_hash": "abdaad1a6384cc5a4c4f703c96c5c71a",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\account.tsx": {
+    "mtime": 1779043321.3186686,
+    "ast_hash": "ea1842074728c896c8bc82d99b08c6f1",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\admin.index.tsx": {
+    "mtime": 1778579944.934733,
+    "ast_hash": "d0fce10b2005ed27ae0e53efd7b54a99",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\admin.kyc.tsx": {
+    "mtime": 1778580028.772039,
+    "ast_hash": "72dfe25d4920e0a6a5bbaad67834cdb4",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\admin.tracks.tsx": {
+    "mtime": 1778580001.236939,
+    "ast_hash": "f839d92d62109d0a324345fc546e0cad",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\apply-seller.tsx": {
+    "mtime": 1778865429.2626162,
+    "ast_hash": "0d1af6a323849906c60fd8848658f9a9",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\dashboard.analytics.tsx": {
+    "mtime": 1778578935.970947,
+    "ast_hash": "96474e9daac1aa320fc2e86bb24c6018",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\dashboard.earnings.tsx": {
+    "mtime": 1778592607.676885,
+    "ast_hash": "d741902b67ed3d1078555dbddafdc078",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\dashboard.index.tsx": {
+    "mtime": 1779034061.812425,
+    "ast_hash": "656d324eb19ba224279d003cafdd15f2",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\dashboard.tracks.tsx": {
+    "mtime": 1778581223.8738024,
+    "ast_hash": "784b94c6bd8736b565c1f2aec8fd4173",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\dashboard.tsx": {
+    "mtime": 1778578710.0404031,
+    "ast_hash": "2f0748a6c3a1668ca43934b6dd925ac7",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\faq.tsx": {
+    "mtime": 1778865158.868196,
+    "ast_hash": "0d31873b8373b601a963f41d16ce0c03",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\how-we-work.tsx": {
+    "mtime": 1778864720.6796942,
+    "ast_hash": "379b6b3e139842287cd2e797d788b726",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\index.tsx": {
+    "mtime": 1778869282.9046433,
+    "ast_hash": "235b33389089e7dd1a4b74843f1cfd37",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\legal.tsx": {
+    "mtime": 1778865218.6588652,
+    "ast_hash": "c1fdb63efa9bfb248e6d6f98bbe6e9cf",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\login.tsx": {
+    "mtime": 1779053439.0702403,
+    "ast_hash": "424ef3bb8d147ac3b99f4c167f90693d",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\sell.tsx": {
+    "mtime": 1778533535.0512109,
+    "ast_hash": "be1b377773d59249ac037e6b6de35d66",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\services.tsx": {
+    "mtime": 1779055642.5857053,
+    "ast_hash": "7baf36713cda96e101f6a13e534716ee",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\tracks.$id.tsx": {
+    "mtime": 1778866182.3383572,
+    "ast_hash": "5b243d316f0ce5a1dd148fff29d7b122",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\tracks.tsx": {
+    "mtime": 1778533535.0818028,
+    "ast_hash": "2c6f22cd716c6e6ca0028b0e250efb61",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\upload.tsx": {
+    "mtime": 1778578061.46292,
+    "ast_hash": "e0fdffa2f55db356af2dd8ec6f13b844",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\routes\\__root.tsx": {
+    "mtime": 1778965841.7767127,
+    "ast_hash": "b752804e9529cf560903bfc66ebae8cb",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Frontend\\src\\store\\index.ts": {
+    "mtime": 1778592805.2205431,
+    "ast_hash": "af57d5a7e955a4abc2e67d4c0870affe",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\IMPLEMENTATION_COMPLETE.md": {
+    "mtime": 1779034127.1753266,
+    "ast_hash": "efec6cee679050d036a47ca413c5fee0",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\IMPLEMENTATION_SUMMARY.md": {
+    "mtime": 1779053918.322701,
+    "ast_hash": "7f06a748e917083b3cbc0b4b3d21fe75",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\LOCAL_DEMO_GUIDE.md": {
+    "mtime": 1778965679.400625,
+    "ast_hash": "8bb81aaa5d28e97c25dba4a69eb72efd",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\LOCAL_DEVELOPMENT.md": {
+    "mtime": 1779028225.0637703,
+    "ast_hash": "1f86cbe0466ee1d4d62a10fac01c10fb",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\NAVBAR_DYNAMIC_MENU.md": {
+    "mtime": 1779054970.847785,
+    "ast_hash": "19b5822a57c53fa75303bf03d6d511e0",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\NETLIFY_DEPLOYMENT.md": {
+    "mtime": 1778956821.511707,
+    "ast_hash": "986c32998699e7d89caac8fb3127ecd4",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\QUICK_DEPLOY.md": {
+    "mtime": 1778954027.626508,
+    "ast_hash": "73019dbd103529730b13c8bfbf17cf15",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\QUICK_START.md": {
+    "mtime": 1779053928.8006017,
+    "ast_hash": "edf299339619fdd832cdb965ff2bf422",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\README.md": {
+    "mtime": 1778957750.9345934,
+    "ast_hash": "b3af3a4cda47759778f1d11a13256a5d",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\SELLER_MODE_FIX.md": {
+    "mtime": 1779054345.441969,
+    "ast_hash": "69a2a5024a36fbc95c532b4552219daf",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\SETUP_GUIDE.md": {
+    "mtime": 1779053818.7074907,
+    "ast_hash": "4943f88ee039d1ff6b68aae2e965635b",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\SUPABASE_CLEANUP_COMPLETE.md": {
+    "mtime": 1779055377.2995403,
+    "ast_hash": "750f30d332cba571bf58e105bb160084",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\SUPABASE_DELETED_FINAL.md": {
+    "mtime": 1779055778.8509932,
+    "ast_hash": "81c1ea1c23e1d227785a7b4be2a7c5fa",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\SUPABASE_FINAL_CLEANUP.md": {
+    "mtime": 1779055520.9374797,
+    "ast_hash": "129d193aed2adb2ae2cdeca6b0e1010a",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\SUPABASE_FIX.md": {
+    "mtime": 1779054053.71675,
+    "ast_hash": "1d953634bab46ee354e6cb31a949b4e8",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\SUPABASE_PERMANENTLY_DELETED.md": {
+    "mtime": 1779055687.2870624,
+    "ast_hash": "5ad69f9d8a1c1098a6724319a1a4f6e4",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\TANSTACK_START_ANALYSIS.md": {
+    "mtime": 1778965766.0224898,
+    "ast_hash": "c0c9a978f9e6c18285fff5e857d56c97",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\VERCEL_DEPLOYMENT.md": {
+    "mtime": 1778955541.908226,
+    "ast_hash": "65763f40e43763540c8894b545700c9c",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\controllers\\track.controller.js": {
+    "mtime": 1779135028.535052,
+    "ast_hash": "c67eb0c73f184bd6331cd1a3ef476480",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\routes\\seller.routes.js": {
+    "mtime": 1779135064.6869533,
+    "ast_hash": "6c95dd3961b3a74848c11b3304ae211f",
+    "semantic_hash": ""
+  },
+  "E:\\ghostbus-sound-forge-main\\Backend\\routes\\track.routes.js": {
+    "mtime": 1779135199.3629591,
+    "ast_hash": "b49b7ac780d584efec811c235458f9d6",
+    "semantic_hash": ""
+  }
+}

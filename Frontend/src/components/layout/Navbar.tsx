@@ -1,17 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
-import { Heart, ShoppingBag, Menu, X, LogOut, User, Home, Mail, Users, ChevronDown } from "lucide-react";
+import { Heart, ShoppingBag, Menu, X, LogOut, User, Home, Mail, Users, ChevronDown, Search } from "lucide-react";
 import { useCart, useAudio } from "@/store";
-import { useAuth } from "@/hooks/use-auth";
-import { SmartSearch } from "./SmartSearch";
-import { NotificationBell } from "./NotificationBell";
-import { GENRES } from "@/lib/mock-data";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { GENRES, GENRE_SLUGS } from "@/lib/mock-data";
 
 const GENRE_COLS = [
-  GENRES.slice(0, 5),
-  GENRES.slice(5, 10),
-  GENRES.slice(10),
+  GENRES.slice(0, 7),
+  GENRES.slice(7, 14),
+  GENRES.slice(14),
 ];
 
 const SERVICES_MENU = [
@@ -31,8 +29,8 @@ export function Navbar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const cart = useCart();
   const playing = useAudio((s) => s.current);
-  const { user, signOut } = useAuth();
-  const initial = (user?.user_metadata?.display_name || user?.email || "?").charAt(0).toUpperCase();
+  const { user, signOut, sellerModeEnabled } = useAuthContext();
+  const initial = (user?.fullName || user?.email || "?").charAt(0).toUpperCase();
   const genreRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -70,7 +68,7 @@ export function Navbar() {
         <div className="container-app h-full flex items-center gap-4">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#0A84FF] to-[#5BA7FF] grid place-items-center text-white font-bold text-sm shadow-[0_4px_14px_rgba(10,132,255,0.35)]">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#060226] to-[#1a0a5e] grid place-items-center text-white font-bold text-sm shadow-[0_4px_14px_rgba(6,2,38,0.45)]">
               G
             </div>
             <span className="font-semibold tracking-tight text-[17px]">GhostBus</span>
@@ -78,7 +76,15 @@ export function Navbar() {
 
           {/* Smart Search */}
           <div className="hidden md:flex flex-1 max-w-xl mx-auto">
-            <SmartSearch />
+            {/* <SmartSearch /> */}
+            <div className="relative w-full">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <input
+                placeholder="Search tracks, genres, producers..."
+                className="w-full h-11 pl-11 pr-4 rounded-full bg-white/80 border border-border focus:bg-white focus:border-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/10 text-sm placeholder:text-muted-foreground transition-all"
+                disabled
+              />
+            </div>
           </div>
 
           {/* Nav Links */}
@@ -111,7 +117,7 @@ export function Navbar() {
                           {col.map((g) => (
                             <Link
                               key={g}
-                              to="/tracks"
+                              to={`/genres/${GENRE_SLUGS[g]}`}
                               onClick={() => setGenreOpen(false)}
                               className="block px-3 py-2 rounded-xl text-sm hover:bg-muted hover:text-primary transition-colors"
                             >
@@ -126,49 +132,6 @@ export function Navbar() {
                         View all tracks →
                       </Link>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Services Dropdown */}
-            <div 
-              ref={servicesRef} 
-              className="relative"
-              onMouseEnter={() => { setServicesOpen(true); setGenreOpen(false); }}
-              onMouseLeave={() => setServicesOpen(false)}
-            >
-              <button
-                className="px-3 py-2 text-sm text-foreground/80 hover:text-foreground inline-flex items-center gap-1"
-              >
-                Services <ChevronDown className={`w-3.5 h-3.5 transition-transform ${servicesOpen ? "rotate-180" : ""}`} />
-              </button>
-              <AnimatePresence>
-                {servicesOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.97 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.97 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-2 w-[360px] bg-background border border-border rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.12)] p-3 z-50"
-                  >
-                    <div className="label-eyebrow px-2 mb-2">Producer Services</div>
-                    {SERVICES_MENU.map((s) => (
-                      <Link
-                        key={s.label}
-                        to="/services"
-                        onClick={() => setServicesOpen(false)}
-                        className="flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-muted transition-colors"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-accent grid place-items-center shrink-0 mt-0.5">
-                          <span className="text-primary text-xs font-bold">{s.label[0]}</span>
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium">{s.label}</div>
-                          <div className="text-xs text-muted-foreground">{s.desc}</div>
-                        </div>
-                      </Link>
-                    ))}
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -192,7 +155,7 @@ export function Navbar() {
             >
               <Heart className="w-4.5 h-4.5" />
             </button>
-            <NotificationBell />
+            {/* <NotificationBell /> */}
             <button
               onClick={() => cart.setOpen(true)}
               aria-label="Cart"
@@ -212,8 +175,8 @@ export function Navbar() {
                   onClick={() => setProfileOpen((v) => !v)}
                   className="inline-flex h-9 items-center gap-2 pl-1 pr-3 rounded-full border border-border hover:bg-muted transition"
                 >
-                  <span className="w-7 h-7 rounded-full bg-gradient-to-br from-[#0A84FF] to-[#5BA7FF] grid place-items-center text-white text-xs font-semibold">{initial}</span>
-                  <span className="text-sm font-medium max-w-[100px] truncate">{user.user_metadata?.display_name ?? user.email?.split("@")[0]}</span>
+                  <span className="w-7 h-7 rounded-full bg-gradient-to-br from-[#060226] to-[#1a0a5e] grid place-items-center text-white text-xs font-semibold">{initial}</span>
+                  <span className="text-sm font-medium max-w-[100px] truncate">{user.fullName ?? user.email?.split("@")[0]}</span>
                   <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${profileOpen ? "rotate-180" : ""}`} />
                 </button>
                 <AnimatePresence>
@@ -226,17 +189,39 @@ export function Navbar() {
                       className="absolute top-full right-0 mt-2 w-56 bg-background border border-border rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.12)] overflow-hidden z-50"
                     >
                       <div className="px-4 py-3 border-b border-border">
-                        <div className="text-sm font-semibold truncate">{user.user_metadata?.display_name ?? "User"}</div>
+                        <div className="text-sm font-semibold truncate">{user.fullName ?? "User"}</div>
                         <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+                        {sellerModeEnabled && (
+                          <div className="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
+                            Seller Mode
+                          </div>
+                        )}
                       </div>
                       <div className="py-1.5">
-                        <DropItem icon={<Home className="w-4 h-4" />} label="Account Overview" to="/account" onClick={() => setProfileOpen(false)} />
-                        <DropItem icon={<User className="w-4 h-4" />} label="Start Selling" to="/apply-seller" onClick={() => setProfileOpen(false)} />
-                        <DropItem icon={<ShoppingBag className="w-4 h-4" />} label="My Orders" to="/account/orders" onClick={() => setProfileOpen(false)} />
-                        <DropItem icon={<Heart className="w-4 h-4" />} label="Favorites" to="/account/favorites" onClick={() => setProfileOpen(false)} />
-                        <DropItem icon={<Users className="w-4 h-4" />} label="Following" to="/account/following" onClick={() => setProfileOpen(false)} />
-                        <DropItem icon={<User className="w-4 h-4" />} label="Edit Profile" to="/account/profile" onClick={() => setProfileOpen(false)} />
-                        <DropItem icon={<Mail className="w-4 h-4" />} label="Mailing" to="/account/mailing" onClick={() => setProfileOpen(false)} />
+                        {sellerModeEnabled ? (
+                          // Seller Dashboard Options
+                          <>
+                            <DropItem icon={<Home className="w-4 h-4" />} label="Seller Dashboard" to="/dashboard" onClick={() => setProfileOpen(false)} />
+                            <DropItem icon={<ShoppingBag className="w-4 h-4" />} label="My Tracks" to="/dashboard/tracks" onClick={() => setProfileOpen(false)} />
+                            <DropItem icon={<User className="w-4 h-4" />} label="Upload Track" to="/dashboard/upload" onClick={() => setProfileOpen(false)} />
+                            <DropItem icon={<Mail className="w-4 h-4" />} label="Messages" to="/dashboard/messages" onClick={() => setProfileOpen(false)} />
+                            <DropItem icon={<Users className="w-4 h-4" />} label="Earnings" to="/dashboard/earnings" onClick={() => setProfileOpen(false)} />
+                            <DropItem icon={<User className="w-4 h-4" />} label="Analytics" to="/dashboard/analytics" onClick={() => setProfileOpen(false)} />
+                            <DropItem icon={<Home className="w-4 h-4" />} label="Switch to Buyer" to="/account" onClick={() => setProfileOpen(false)} />
+                          </>
+                        ) : (
+                          // Buyer Dashboard Options
+                          <>
+                            <DropItem icon={<Home className="w-4 h-4" />} label="Account Overview" to="/account" onClick={() => setProfileOpen(false)} />
+                            <DropItem icon={<User className="w-4 h-4" />} label="Start Selling" to="/apply-seller" onClick={() => setProfileOpen(false)} />
+                            <DropItem icon={<ShoppingBag className="w-4 h-4" />} label="My Orders" to="/account/orders" onClick={() => setProfileOpen(false)} />
+                            <DropItem icon={<Heart className="w-4 h-4" />} label="Favorites" to="/account/favorites" onClick={() => setProfileOpen(false)} />
+                            <DropItem icon={<Users className="w-4 h-4" />} label="Following" to="/account/following" onClick={() => setProfileOpen(false)} />
+                            <DropItem icon={<User className="w-4 h-4" />} label="Edit Profile" to="/account/profile" onClick={() => setProfileOpen(false)} />
+                            <DropItem icon={<Mail className="w-4 h-4" />} label="Mailing" to="/account/mailing" onClick={() => setProfileOpen(false)} />
+                          </>
+                        )}
                       </div>
                       <div className="border-t border-border py-1.5">
                         <button
@@ -283,7 +268,7 @@ export function Navbar() {
               </button>
             </div>
             <div className="container-app py-4">
-              <SmartSearch />
+              {/* <SmartSearch /> */}
             </div>
             <nav className="container-app py-4 flex flex-col gap-1">
               <Link to="/tracks" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">Genres</Link>
@@ -292,7 +277,19 @@ export function Navbar() {
               <Link to="/how-we-work" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">How We Work</Link>
               {user ? (
                 <>
-                  <Link to="/dashboard" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">Dashboard</Link>
+                  {sellerModeEnabled ? (
+                    <>
+                      <Link to="/dashboard" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">Seller Dashboard</Link>
+                      <Link to="/dashboard/tracks" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">My Tracks</Link>
+                      <Link to="/dashboard/upload" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">Upload Track</Link>
+                      <Link to="/account" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">Switch to Buyer</Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link to="/account" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">Account</Link>
+                      <Link to="/account/orders" onClick={() => setMobile(false)} className="py-3.5 text-xl font-semibold tracking-tight border-b border-border">My Orders</Link>
+                    </>
+                  )}
                   <button onClick={() => { signOut(); setMobile(false); }} className="py-3.5 text-xl font-semibold tracking-tight text-destructive text-left">Sign out</button>
                 </>
               ) : (
@@ -304,7 +301,6 @@ export function Navbar() {
       </AnimatePresence>
 
       <div style={{ height: 72 }} />
-      <div style={{ height: playing ? 80 : 0, transition: "height 0.3s" }} />
     </>
   );
 }

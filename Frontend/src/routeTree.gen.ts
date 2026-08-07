@@ -9,44 +9,54 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UploadRouteImport } from './routes/upload'
+import { Route as WhatIsGhostProductionRouteImport } from './routes/what-is-ghost-production'
+import { Route as WhatIsGhostProducerRouteImport } from './routes/what-is-ghost-producer'
 import { Route as TracksRouteImport } from './routes/tracks'
-import { Route as ServicesRouteImport } from './routes/services'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as SellerAgreementRouteImport } from './routes/seller-agreement'
 import { Route as SellRouteImport } from './routes/sell'
+import { Route as RefundPolicyRouteImport } from './routes/refund-policy'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as LicensingLegalRouteImport } from './routes/licensing-legal'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as HowWeWorkRouteImport } from './routes/how-we-work'
+import { Route as HowToUploadTracksRouteImport } from './routes/how-to-upload-tracks'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as DmcaRouteImport } from './routes/dmca'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as ContactRouteImport } from './routes/contact'
 import { Route as ApplySellerRouteImport } from './routes/apply-seller'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DashboardIndexRouteImport } from './routes/dashboard.index'
-import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as AccountIndexRouteImport } from './routes/account.index'
 import { Route as TracksIdRouteImport } from './routes/tracks.$id'
+import { Route as SellersUsernameRouteImport } from './routes/sellers.$username'
+import { Route as GenresSlugRouteImport } from './routes/genres.$slug'
 import { Route as DashboardUploadRouteImport } from './routes/dashboard.upload'
 import { Route as DashboardTracksRouteImport } from './routes/dashboard.tracks'
 import { Route as DashboardSettingsRouteImport } from './routes/dashboard.settings'
-import { Route as DashboardMessagesRouteImport } from './routes/dashboard.messages'
 import { Route as DashboardKycRouteImport } from './routes/dashboard.kyc'
 import { Route as DashboardEarningsRouteImport } from './routes/dashboard.earnings'
 import { Route as DashboardAnalyticsRouteImport } from './routes/dashboard.analytics'
-import { Route as CheckoutSuccessRouteImport } from './routes/checkout.success'
-import { Route as AdminUsersRouteImport } from './routes/admin.users'
-import { Route as AdminTracksRouteImport } from './routes/admin.tracks'
-import { Route as AdminOrdersRouteImport } from './routes/admin.orders'
-import { Route as AdminKycRouteImport } from './routes/admin.kyc'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
+import { Route as AccountSupportRouteImport } from './routes/account.support'
 import { Route as AccountProfileRouteImport } from './routes/account.profile'
 import { Route as AccountOrdersRouteImport } from './routes/account.orders'
 import { Route as AccountMailingRouteImport } from './routes/account.mailing'
 import { Route as AccountFollowingRouteImport } from './routes/account.following'
 import { Route as AccountFavoritesRouteImport } from './routes/account.favorites'
 
-const UploadRoute = UploadRouteImport.update({
-  id: '/upload',
-  path: '/upload',
+const WhatIsGhostProductionRoute = WhatIsGhostProductionRouteImport.update({
+  id: '/what-is-ghost-production',
+  path: '/what-is-ghost-production',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WhatIsGhostProducerRoute = WhatIsGhostProducerRouteImport.update({
+  id: '/what-is-ghost-producer',
+  path: '/what-is-ghost-producer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TracksRoute = TracksRouteImport.update({
@@ -54,9 +64,14 @@ const TracksRoute = TracksRouteImport.update({
   path: '/tracks',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ServicesRoute = ServicesRouteImport.update({
-  id: '/services',
-  path: '/services',
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SellerAgreementRoute = SellerAgreementRouteImport.update({
+  id: '/seller-agreement',
+  path: '/seller-agreement',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SellRoute = SellRouteImport.update({
@@ -64,9 +79,24 @@ const SellRoute = SellRouteImport.update({
   path: '/sell',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RefundPolicyRoute = RefundPolicyRouteImport.update({
+  id: '/refund-policy',
+  path: '/refund-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LicensingLegalRoute = LicensingLegalRouteImport.update({
+  id: '/licensing-legal',
+  path: '/licensing-legal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LegalRoute = LegalRouteImport.update({
@@ -79,9 +109,19 @@ const HowWeWorkRoute = HowWeWorkRouteImport.update({
   path: '/how-we-work',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HowToUploadTracksRoute = HowToUploadTracksRouteImport.update({
+  id: '/how-to-upload-tracks',
+  path: '/how-to-upload-tracks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DmcaRoute = DmcaRouteImport.update({
+  id: '/dmca',
+  path: '/dmca',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -89,14 +129,14 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApplySellerRoute = ApplySellerRouteImport.update({
   id: '/apply-seller',
   path: '/apply-seller',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AccountRoute = AccountRouteImport.update({
@@ -114,10 +154,10 @@ const DashboardIndexRoute = DashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoute,
 } as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminRoute,
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AccountIndexRoute = AccountIndexRouteImport.update({
   id: '/',
@@ -128,6 +168,16 @@ const TracksIdRoute = TracksIdRouteImport.update({
   id: '/$id',
   path: '/$id',
   getParentRoute: () => TracksRoute,
+} as any)
+const SellersUsernameRoute = SellersUsernameRouteImport.update({
+  id: '/sellers/$username',
+  path: '/sellers/$username',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GenresSlugRoute = GenresSlugRouteImport.update({
+  id: '/genres/$slug',
+  path: '/genres/$slug',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardUploadRoute = DashboardUploadRouteImport.update({
   id: '/upload',
@@ -142,11 +192,6 @@ const DashboardTracksRoute = DashboardTracksRouteImport.update({
 const DashboardSettingsRoute = DashboardSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
-  getParentRoute: () => DashboardRoute,
-} as any)
-const DashboardMessagesRoute = DashboardMessagesRouteImport.update({
-  id: '/messages',
-  path: '/messages',
   getParentRoute: () => DashboardRoute,
 } as any)
 const DashboardKycRoute = DashboardKycRouteImport.update({
@@ -164,30 +209,15 @@ const DashboardAnalyticsRoute = DashboardAnalyticsRouteImport.update({
   path: '/analytics',
   getParentRoute: () => DashboardRoute,
 } as any)
-const CheckoutSuccessRoute = CheckoutSuccessRouteImport.update({
-  id: '/checkout/success',
-  path: '/checkout/success',
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminUsersRoute = AdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminTracksRoute = AdminTracksRouteImport.update({
-  id: '/tracks',
-  path: '/tracks',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminOrdersRoute = AdminOrdersRouteImport.update({
-  id: '/orders',
-  path: '/orders',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminKycRoute = AdminKycRouteImport.update({
-  id: '/kyc',
-  path: '/kyc',
-  getParentRoute: () => AdminRoute,
+const AccountSupportRoute = AccountSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AccountRoute,
 } as any)
 const AccountProfileRoute = AccountProfileRouteImport.update({
   id: '/profile',
@@ -218,107 +248,123 @@ const AccountFavoritesRoute = AccountFavoritesRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRouteWithChildren
-  '/admin': typeof AdminRouteWithChildren
   '/apply-seller': typeof ApplySellerRoute
+  '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/dmca': typeof DmcaRoute
   '/faq': typeof FaqRoute
+  '/how-to-upload-tracks': typeof HowToUploadTracksRoute
   '/how-we-work': typeof HowWeWorkRoute
   '/legal': typeof LegalRoute
+  '/licensing-legal': typeof LicensingLegalRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/refund-policy': typeof RefundPolicyRoute
   '/sell': typeof SellRoute
-  '/services': typeof ServicesRoute
+  '/seller-agreement': typeof SellerAgreementRoute
+  '/terms': typeof TermsRoute
   '/tracks': typeof TracksRouteWithChildren
-  '/upload': typeof UploadRoute
+  '/what-is-ghost-producer': typeof WhatIsGhostProducerRoute
+  '/what-is-ghost-production': typeof WhatIsGhostProductionRoute
   '/account/favorites': typeof AccountFavoritesRoute
   '/account/following': typeof AccountFollowingRoute
   '/account/mailing': typeof AccountMailingRoute
   '/account/orders': typeof AccountOrdersRoute
   '/account/profile': typeof AccountProfileRoute
-  '/admin/kyc': typeof AdminKycRoute
-  '/admin/orders': typeof AdminOrdersRoute
-  '/admin/tracks': typeof AdminTracksRoute
-  '/admin/users': typeof AdminUsersRoute
-  '/checkout/success': typeof CheckoutSuccessRoute
+  '/account/support': typeof AccountSupportRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/kyc': typeof DashboardKycRoute
-  '/dashboard/messages': typeof DashboardMessagesRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/tracks': typeof DashboardTracksRoute
   '/dashboard/upload': typeof DashboardUploadRoute
+  '/genres/$slug': typeof GenresSlugRoute
+  '/sellers/$username': typeof SellersUsernameRoute
   '/tracks/$id': typeof TracksIdRoute
   '/account/': typeof AccountIndexRoute
-  '/admin/': typeof AdminIndexRoute
+  '/blog/': typeof BlogIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/apply-seller': typeof ApplySellerRoute
+  '/contact': typeof ContactRoute
+  '/dmca': typeof DmcaRoute
   '/faq': typeof FaqRoute
+  '/how-to-upload-tracks': typeof HowToUploadTracksRoute
   '/how-we-work': typeof HowWeWorkRoute
   '/legal': typeof LegalRoute
+  '/licensing-legal': typeof LicensingLegalRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/refund-policy': typeof RefundPolicyRoute
   '/sell': typeof SellRoute
-  '/services': typeof ServicesRoute
+  '/seller-agreement': typeof SellerAgreementRoute
+  '/terms': typeof TermsRoute
   '/tracks': typeof TracksRouteWithChildren
-  '/upload': typeof UploadRoute
+  '/what-is-ghost-producer': typeof WhatIsGhostProducerRoute
+  '/what-is-ghost-production': typeof WhatIsGhostProductionRoute
   '/account/favorites': typeof AccountFavoritesRoute
   '/account/following': typeof AccountFollowingRoute
   '/account/mailing': typeof AccountMailingRoute
   '/account/orders': typeof AccountOrdersRoute
   '/account/profile': typeof AccountProfileRoute
-  '/admin/kyc': typeof AdminKycRoute
-  '/admin/orders': typeof AdminOrdersRoute
-  '/admin/tracks': typeof AdminTracksRoute
-  '/admin/users': typeof AdminUsersRoute
-  '/checkout/success': typeof CheckoutSuccessRoute
+  '/account/support': typeof AccountSupportRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/kyc': typeof DashboardKycRoute
-  '/dashboard/messages': typeof DashboardMessagesRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/tracks': typeof DashboardTracksRoute
   '/dashboard/upload': typeof DashboardUploadRoute
+  '/genres/$slug': typeof GenresSlugRoute
+  '/sellers/$username': typeof SellersUsernameRoute
   '/tracks/$id': typeof TracksIdRoute
   '/account': typeof AccountIndexRoute
-  '/admin': typeof AdminIndexRoute
+  '/blog': typeof BlogIndexRoute
   '/dashboard': typeof DashboardIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/account': typeof AccountRouteWithChildren
-  '/admin': typeof AdminRouteWithChildren
   '/apply-seller': typeof ApplySellerRoute
+  '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
+  '/dmca': typeof DmcaRoute
   '/faq': typeof FaqRoute
+  '/how-to-upload-tracks': typeof HowToUploadTracksRoute
   '/how-we-work': typeof HowWeWorkRoute
   '/legal': typeof LegalRoute
+  '/licensing-legal': typeof LicensingLegalRoute
   '/login': typeof LoginRoute
+  '/privacy': typeof PrivacyRoute
+  '/refund-policy': typeof RefundPolicyRoute
   '/sell': typeof SellRoute
-  '/services': typeof ServicesRoute
+  '/seller-agreement': typeof SellerAgreementRoute
+  '/terms': typeof TermsRoute
   '/tracks': typeof TracksRouteWithChildren
-  '/upload': typeof UploadRoute
+  '/what-is-ghost-producer': typeof WhatIsGhostProducerRoute
+  '/what-is-ghost-production': typeof WhatIsGhostProductionRoute
   '/account/favorites': typeof AccountFavoritesRoute
   '/account/following': typeof AccountFollowingRoute
   '/account/mailing': typeof AccountMailingRoute
   '/account/orders': typeof AccountOrdersRoute
   '/account/profile': typeof AccountProfileRoute
-  '/admin/kyc': typeof AdminKycRoute
-  '/admin/orders': typeof AdminOrdersRoute
-  '/admin/tracks': typeof AdminTracksRoute
-  '/admin/users': typeof AdminUsersRoute
-  '/checkout/success': typeof CheckoutSuccessRoute
+  '/account/support': typeof AccountSupportRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/dashboard/analytics': typeof DashboardAnalyticsRoute
   '/dashboard/earnings': typeof DashboardEarningsRoute
   '/dashboard/kyc': typeof DashboardKycRoute
-  '/dashboard/messages': typeof DashboardMessagesRoute
   '/dashboard/settings': typeof DashboardSettingsRoute
   '/dashboard/tracks': typeof DashboardTracksRoute
   '/dashboard/upload': typeof DashboardUploadRoute
+  '/genres/$slug': typeof GenresSlugRoute
+  '/sellers/$username': typeof SellersUsernameRoute
   '/tracks/$id': typeof TracksIdRoute
   '/account/': typeof AccountIndexRoute
-  '/admin/': typeof AdminIndexRoute
+  '/blog/': typeof BlogIndexRoute
   '/dashboard/': typeof DashboardIndexRoute
 }
 export interface FileRouteTypes {
@@ -326,133 +372,166 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/account'
-    | '/admin'
     | '/apply-seller'
+    | '/contact'
     | '/dashboard'
+    | '/dmca'
     | '/faq'
+    | '/how-to-upload-tracks'
     | '/how-we-work'
     | '/legal'
+    | '/licensing-legal'
     | '/login'
+    | '/privacy'
+    | '/refund-policy'
     | '/sell'
-    | '/services'
+    | '/seller-agreement'
+    | '/terms'
     | '/tracks'
-    | '/upload'
+    | '/what-is-ghost-producer'
+    | '/what-is-ghost-production'
     | '/account/favorites'
     | '/account/following'
     | '/account/mailing'
     | '/account/orders'
     | '/account/profile'
-    | '/admin/kyc'
-    | '/admin/orders'
-    | '/admin/tracks'
-    | '/admin/users'
-    | '/checkout/success'
+    | '/account/support'
+    | '/blog/$slug'
     | '/dashboard/analytics'
     | '/dashboard/earnings'
     | '/dashboard/kyc'
-    | '/dashboard/messages'
     | '/dashboard/settings'
     | '/dashboard/tracks'
     | '/dashboard/upload'
+    | '/genres/$slug'
+    | '/sellers/$username'
     | '/tracks/$id'
     | '/account/'
-    | '/admin/'
+    | '/blog/'
     | '/dashboard/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/apply-seller'
+    | '/contact'
+    | '/dmca'
     | '/faq'
+    | '/how-to-upload-tracks'
     | '/how-we-work'
     | '/legal'
+    | '/licensing-legal'
     | '/login'
+    | '/privacy'
+    | '/refund-policy'
     | '/sell'
-    | '/services'
+    | '/seller-agreement'
+    | '/terms'
     | '/tracks'
-    | '/upload'
+    | '/what-is-ghost-producer'
+    | '/what-is-ghost-production'
     | '/account/favorites'
     | '/account/following'
     | '/account/mailing'
     | '/account/orders'
     | '/account/profile'
-    | '/admin/kyc'
-    | '/admin/orders'
-    | '/admin/tracks'
-    | '/admin/users'
-    | '/checkout/success'
+    | '/account/support'
+    | '/blog/$slug'
     | '/dashboard/analytics'
     | '/dashboard/earnings'
     | '/dashboard/kyc'
-    | '/dashboard/messages'
     | '/dashboard/settings'
     | '/dashboard/tracks'
     | '/dashboard/upload'
+    | '/genres/$slug'
+    | '/sellers/$username'
     | '/tracks/$id'
     | '/account'
-    | '/admin'
+    | '/blog'
     | '/dashboard'
   id:
     | '__root__'
     | '/'
     | '/account'
-    | '/admin'
     | '/apply-seller'
+    | '/contact'
     | '/dashboard'
+    | '/dmca'
     | '/faq'
+    | '/how-to-upload-tracks'
     | '/how-we-work'
     | '/legal'
+    | '/licensing-legal'
     | '/login'
+    | '/privacy'
+    | '/refund-policy'
     | '/sell'
-    | '/services'
+    | '/seller-agreement'
+    | '/terms'
     | '/tracks'
-    | '/upload'
+    | '/what-is-ghost-producer'
+    | '/what-is-ghost-production'
     | '/account/favorites'
     | '/account/following'
     | '/account/mailing'
     | '/account/orders'
     | '/account/profile'
-    | '/admin/kyc'
-    | '/admin/orders'
-    | '/admin/tracks'
-    | '/admin/users'
-    | '/checkout/success'
+    | '/account/support'
+    | '/blog/$slug'
     | '/dashboard/analytics'
     | '/dashboard/earnings'
     | '/dashboard/kyc'
-    | '/dashboard/messages'
     | '/dashboard/settings'
     | '/dashboard/tracks'
     | '/dashboard/upload'
+    | '/genres/$slug'
+    | '/sellers/$username'
     | '/tracks/$id'
     | '/account/'
-    | '/admin/'
+    | '/blog/'
     | '/dashboard/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRouteWithChildren
-  AdminRoute: typeof AdminRouteWithChildren
   ApplySellerRoute: typeof ApplySellerRoute
+  ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRouteWithChildren
+  DmcaRoute: typeof DmcaRoute
   FaqRoute: typeof FaqRoute
+  HowToUploadTracksRoute: typeof HowToUploadTracksRoute
   HowWeWorkRoute: typeof HowWeWorkRoute
   LegalRoute: typeof LegalRoute
+  LicensingLegalRoute: typeof LicensingLegalRoute
   LoginRoute: typeof LoginRoute
+  PrivacyRoute: typeof PrivacyRoute
+  RefundPolicyRoute: typeof RefundPolicyRoute
   SellRoute: typeof SellRoute
-  ServicesRoute: typeof ServicesRoute
+  SellerAgreementRoute: typeof SellerAgreementRoute
+  TermsRoute: typeof TermsRoute
   TracksRoute: typeof TracksRouteWithChildren
-  UploadRoute: typeof UploadRoute
-  CheckoutSuccessRoute: typeof CheckoutSuccessRoute
+  WhatIsGhostProducerRoute: typeof WhatIsGhostProducerRoute
+  WhatIsGhostProductionRoute: typeof WhatIsGhostProductionRoute
+  BlogSlugRoute: typeof BlogSlugRoute
+  GenresSlugRoute: typeof GenresSlugRoute
+  SellersUsernameRoute: typeof SellersUsernameRoute
+  BlogIndexRoute: typeof BlogIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/upload': {
-      id: '/upload'
-      path: '/upload'
-      fullPath: '/upload'
-      preLoaderRoute: typeof UploadRouteImport
+    '/what-is-ghost-production': {
+      id: '/what-is-ghost-production'
+      path: '/what-is-ghost-production'
+      fullPath: '/what-is-ghost-production'
+      preLoaderRoute: typeof WhatIsGhostProductionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/what-is-ghost-producer': {
+      id: '/what-is-ghost-producer'
+      path: '/what-is-ghost-producer'
+      fullPath: '/what-is-ghost-producer'
+      preLoaderRoute: typeof WhatIsGhostProducerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/tracks': {
@@ -462,11 +541,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TracksRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/services': {
-      id: '/services'
-      path: '/services'
-      fullPath: '/services'
-      preLoaderRoute: typeof ServicesRouteImport
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/seller-agreement': {
+      id: '/seller-agreement'
+      path: '/seller-agreement'
+      fullPath: '/seller-agreement'
+      preLoaderRoute: typeof SellerAgreementRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sell': {
@@ -476,11 +562,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SellRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/refund-policy': {
+      id: '/refund-policy'
+      path: '/refund-policy'
+      fullPath: '/refund-policy'
+      preLoaderRoute: typeof RefundPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/licensing-legal': {
+      id: '/licensing-legal'
+      path: '/licensing-legal'
+      fullPath: '/licensing-legal'
+      preLoaderRoute: typeof LicensingLegalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/legal': {
@@ -497,11 +604,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HowWeWorkRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/how-to-upload-tracks': {
+      id: '/how-to-upload-tracks'
+      path: '/how-to-upload-tracks'
+      fullPath: '/how-to-upload-tracks'
+      preLoaderRoute: typeof HowToUploadTracksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/faq': {
       id: '/faq'
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dmca': {
+      id: '/dmca'
+      path: '/dmca'
+      fullPath: '/dmca'
+      preLoaderRoute: typeof DmcaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -511,18 +632,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/apply-seller': {
       id: '/apply-seller'
       path: '/apply-seller'
       fullPath: '/apply-seller'
       preLoaderRoute: typeof ApplySellerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/account': {
@@ -546,12 +667,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardIndexRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/admin/': {
-      id: '/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof AdminRoute
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/account/': {
       id: '/account/'
@@ -566,6 +687,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/tracks/$id'
       preLoaderRoute: typeof TracksIdRouteImport
       parentRoute: typeof TracksRoute
+    }
+    '/sellers/$username': {
+      id: '/sellers/$username'
+      path: '/sellers/$username'
+      fullPath: '/sellers/$username'
+      preLoaderRoute: typeof SellersUsernameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/genres/$slug': {
+      id: '/genres/$slug'
+      path: '/genres/$slug'
+      fullPath: '/genres/$slug'
+      preLoaderRoute: typeof GenresSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/upload': {
       id: '/dashboard/upload'
@@ -586,13 +721,6 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/dashboard/settings'
       preLoaderRoute: typeof DashboardSettingsRouteImport
-      parentRoute: typeof DashboardRoute
-    }
-    '/dashboard/messages': {
-      id: '/dashboard/messages'
-      path: '/messages'
-      fullPath: '/dashboard/messages'
-      preLoaderRoute: typeof DashboardMessagesRouteImport
       parentRoute: typeof DashboardRoute
     }
     '/dashboard/kyc': {
@@ -616,40 +744,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardAnalyticsRouteImport
       parentRoute: typeof DashboardRoute
     }
-    '/checkout/success': {
-      id: '/checkout/success'
-      path: '/checkout/success'
-      fullPath: '/checkout/success'
-      preLoaderRoute: typeof CheckoutSuccessRouteImport
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/users': {
-      id: '/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AdminUsersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/tracks': {
-      id: '/admin/tracks'
-      path: '/tracks'
-      fullPath: '/admin/tracks'
-      preLoaderRoute: typeof AdminTracksRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/orders': {
-      id: '/admin/orders'
-      path: '/orders'
-      fullPath: '/admin/orders'
-      preLoaderRoute: typeof AdminOrdersRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/kyc': {
-      id: '/admin/kyc'
-      path: '/kyc'
-      fullPath: '/admin/kyc'
-      preLoaderRoute: typeof AdminKycRouteImport
-      parentRoute: typeof AdminRoute
+    '/account/support': {
+      id: '/account/support'
+      path: '/support'
+      fullPath: '/account/support'
+      preLoaderRoute: typeof AccountSupportRouteImport
+      parentRoute: typeof AccountRoute
     }
     '/account/profile': {
       id: '/account/profile'
@@ -695,6 +802,7 @@ interface AccountRouteChildren {
   AccountMailingRoute: typeof AccountMailingRoute
   AccountOrdersRoute: typeof AccountOrdersRoute
   AccountProfileRoute: typeof AccountProfileRoute
+  AccountSupportRoute: typeof AccountSupportRoute
   AccountIndexRoute: typeof AccountIndexRoute
 }
 
@@ -704,35 +812,17 @@ const AccountRouteChildren: AccountRouteChildren = {
   AccountMailingRoute: AccountMailingRoute,
   AccountOrdersRoute: AccountOrdersRoute,
   AccountProfileRoute: AccountProfileRoute,
+  AccountSupportRoute: AccountSupportRoute,
   AccountIndexRoute: AccountIndexRoute,
 }
 
 const AccountRouteWithChildren =
   AccountRoute._addFileChildren(AccountRouteChildren)
 
-interface AdminRouteChildren {
-  AdminKycRoute: typeof AdminKycRoute
-  AdminOrdersRoute: typeof AdminOrdersRoute
-  AdminTracksRoute: typeof AdminTracksRoute
-  AdminUsersRoute: typeof AdminUsersRoute
-  AdminIndexRoute: typeof AdminIndexRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminKycRoute: AdminKycRoute,
-  AdminOrdersRoute: AdminOrdersRoute,
-  AdminTracksRoute: AdminTracksRoute,
-  AdminUsersRoute: AdminUsersRoute,
-  AdminIndexRoute: AdminIndexRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
-
 interface DashboardRouteChildren {
   DashboardAnalyticsRoute: typeof DashboardAnalyticsRoute
   DashboardEarningsRoute: typeof DashboardEarningsRoute
   DashboardKycRoute: typeof DashboardKycRoute
-  DashboardMessagesRoute: typeof DashboardMessagesRoute
   DashboardSettingsRoute: typeof DashboardSettingsRoute
   DashboardTracksRoute: typeof DashboardTracksRoute
   DashboardUploadRoute: typeof DashboardUploadRoute
@@ -743,7 +833,6 @@ const DashboardRouteChildren: DashboardRouteChildren = {
   DashboardAnalyticsRoute: DashboardAnalyticsRoute,
   DashboardEarningsRoute: DashboardEarningsRoute,
   DashboardKycRoute: DashboardKycRoute,
-  DashboardMessagesRoute: DashboardMessagesRoute,
   DashboardSettingsRoute: DashboardSettingsRoute,
   DashboardTracksRoute: DashboardTracksRoute,
   DashboardUploadRoute: DashboardUploadRoute,
@@ -768,18 +857,28 @@ const TracksRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRouteWithChildren,
-  AdminRoute: AdminRouteWithChildren,
   ApplySellerRoute: ApplySellerRoute,
+  ContactRoute: ContactRoute,
   DashboardRoute: DashboardRouteWithChildren,
+  DmcaRoute: DmcaRoute,
   FaqRoute: FaqRoute,
+  HowToUploadTracksRoute: HowToUploadTracksRoute,
   HowWeWorkRoute: HowWeWorkRoute,
   LegalRoute: LegalRoute,
+  LicensingLegalRoute: LicensingLegalRoute,
   LoginRoute: LoginRoute,
+  PrivacyRoute: PrivacyRoute,
+  RefundPolicyRoute: RefundPolicyRoute,
   SellRoute: SellRoute,
-  ServicesRoute: ServicesRoute,
+  SellerAgreementRoute: SellerAgreementRoute,
+  TermsRoute: TermsRoute,
   TracksRoute: TracksRouteWithChildren,
-  UploadRoute: UploadRoute,
-  CheckoutSuccessRoute: CheckoutSuccessRoute,
+  WhatIsGhostProducerRoute: WhatIsGhostProducerRoute,
+  WhatIsGhostProductionRoute: WhatIsGhostProductionRoute,
+  BlogSlugRoute: BlogSlugRoute,
+  GenresSlugRoute: GenresSlugRoute,
+  SellersUsernameRoute: SellersUsernameRoute,
+  BlogIndexRoute: BlogIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

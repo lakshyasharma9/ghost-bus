@@ -1,0 +1,380 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+enum UserRole {
+  BUYER
+  SELLER
+  ADMIN
+}
+
+enum KYCStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TrackStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum OrderStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id                      String    @id @default(uuid())
+  email                   String    @unique
+  password                String
+  fullName                String?   @map("full_name")
+  username                String?   @unique
+  role                    UserRole  @default(BUYER)
+  avatarUrl               String?   @map("avatar_url")
+  bannerUrl               String?   @map("banner_url")
+  bio                     String?
+  isVerified              Boolean   @default(false) @map("is_verified")
+  sellerModeEnabled       Boolean   @default(false) @map("seller_mode_enabled")
+  sellerVerified          Boolean   @default(false) @map("seller_verified")
+  sellerApplicationStatus String?   @map("seller_application_status")
+  kycStatus               KYCStatus @default(PENDING) @map("kyc_status")
+  phone                   String?
+  stripeAccountId         String?   @map("stripe_account_id")
+  createdAt               DateTime  @default(now()) @map("created_at")
+  updatedAt               DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  tracks                  Track[]
+  orders                  Order[]
+  sentMessages            Message[] @relation("SentMessages")
+  receivedMessages        Message[] @relation("ReceivedMessages")
+  notifications           Notification[]
+  wishlists               Wishlist[]
+  reviews                 Review[]  @relation("ReviewsGiven")
+  receivedReviews         Review[]  @relation("ReviewsReceived")
+  kycSubmissions          KYCSubmission[]
+  withdrawals             Withdrawal[]
+  supportTickets          SupportTicket[] @relation("UserTickets")
+  assignedTickets         SupportTicket[] @relation("AssignedTickets")
+  followers               Follow[]  @relation("Following")
+  following               Follow[]  @relation("Followers")
+
+  @@map("users")
+}
+
+model Track {
+  id              String      @id @default(uuid())
+  sellerId        String      @map("seller_id")
+  title           String
+  description     String?
+  genre           String
+  bpm             Int?
+  key             String?
+  price           Decimal     @db.Decimal(10, 2)
+  audioUrl        String      @map("audio_url")
+  coverUrl        String?     @map("cover_url")
+  waveformData    Json?       @map("waveform_data")
+  duration        Int?
+  fileSize        BigInt?     @map("file_size")
+  status          TrackStatus @default(PENDING)
+  rejectionReason String?     @map("rejection_reason")
+  tags            String[]
+  isExclusive     Boolean     @default(true) @map("is_exclusive")
+  playsCount      Int         @default(0) @map("plays_count")
+  likesCount      Int         @default(0) @map("likes_count")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  // Relations
+  seller          User        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  orderItems      OrderItem[]
+  wishlists       Wishlist[]
+
+  @@map("tracks")
+}
+
+model Order {
+  id                    String      @id @default(uuid())
+  buyerId               String      @map("buyer_id")
+  totalAmount           Decimal     @db.Decimal(10, 2) @map("total_amount")
+  status                OrderStatus @default(PENDING)
+  stripePaymentIntentId String?     @unique @map("stripe_payment_intent_id")
+  createdAt             DateTime    @default(now()) @map("created_at")
+
+  // Relations
+  buyer                 User        @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  items                 OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String   @map("order_id")
+  trackId   String   @map("track_id")
+  price     Decimal  @db.Decimal(10, 2)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false) @map("is_read")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String   @map("sender_id")
+  receiverId String   @map("receiver_id")
+  content    String
+  isRead     Boolean  @default(false) @map("is_read")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  trackId   String   @map("track_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trackId])
+  @@map("wishlists")
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  reviewerId String   @map("reviewer_id")
+  revieweeId String   @map("reviewee_id")
+  rating     Int      @db.SmallInt
+  comment    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  reviewer   User     @relation("ReviewsGiven", fields: [reviewerId], references: [id], onDelete: Cascade)
+  reviewee   User     @relation("ReviewsReceived", fields: [revieweeId], references: [id], onDelete: Cascade)
+
+  @@map("reviews")
+}
+
+model KYCSubmission {
+  id              String    @id @default(uuid())
+  userId          String    @map("user_id")
+  documentType    String    @map("document_type")
+  documentUrl     String    @map("document_url")
+  status          KYCStatus @default(PENDING)
+  rejectionReason String?   @map("rejection_reason")
+  submittedAt     DateTime  @default(now()) @map("submitted_at")
+  reviewedAt      DateTime? @map("reviewed_at")
+
+  // Relations
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("kyc_submissions")
+}
+
+model Withdrawal {
+  id               String    @id @default(uuid())
+  sellerId         String    @map("seller_id")
+  amount           Decimal   @db.Decimal(10, 2)
+  status           String    @default("pending")
+  stripeTransferId String?   @map("stripe_transfer_id")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  processedAt      DateTime? @map("processed_at")
+
+  // Relations
+  seller           User      @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@map("withdrawals")
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketCategory {
+  GENERAL_INQUIRY
+  TECHNICAL_SUPPORT
+  BILLING_PAYMENT
+  ACCOUNT_ISSUE
+  TRACK_ISSUE
+  LEGAL_COPYRIGHT
+  SELLER_SUPPORT
+  BUG_REPORT
+  FEATURE_REQUEST
+  OTHER
+}
+
+model SupportTicket {
+  id               String         @id @default(uuid())
+  ticketNumber     String         @unique @map("ticket_number")
+  fullName         String         @map("full_name")
+  email            String
+  phone            String?
+  company          String?
+  userType         String         @map("user_type")
+  subject          String
+  category         TicketCategory @default(GENERAL_INQUIRY)
+  priority         TicketPriority @default(MEDIUM)
+  message          String         @db.Text
+  attachmentUrl    String?        @map("attachment_url")
+  status           TicketStatus   @default(OPEN)
+  userId           String?        @map("user_id")
+  assignedToId     String?        @map("assigned_to_id")
+  adminNotes       String?        @db.Text @map("admin_notes")
+  resolvedAt       DateTime?      @map("resolved_at")
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  user             User?          @relation("UserTickets", fields: [userId], references: [id], onDelete: SetNull)
+  assignedTo       User?          @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  @@map("support_tickets")
+  @@index([status])
+  @@index([category])
+  @@index([priority])
+  @@index([email])
+}
+
+// ─── Blog System ──────────────────────────────────────────────────────────────
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model BlogPost {
+  id              String     @id @default(uuid())
+  title           String
+  slug            String     @unique
+  excerpt         String?
+  content         String     @db.Text
+  coverImageUrl   String?    @map("cover_image_url")
+  category        String     @default("Guide")
+  tags            String[]
+  author          String     @default("GhostBus Team")
+  readTime        String?    @map("read_time")
+  status          BlogStatus @default(DRAFT)
+  publishedAt     DateTime?  @map("published_at")
+  seoTitle        String?    @map("seo_title")
+  seoDescription  String?    @map("seo_description")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  @@map("blog_posts")
+  @@index([status])
+  @@index([slug])
+  @@index([category])
+}
+
+// ─── Feature Flags ────────────────────────────────────────────────────────────
+
+model FeatureFlag {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  enabled     Boolean  @default(false)
+  critical    Boolean  @default(false)
+  updatedBy   String?  @map("updated_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("feature_flags")
+}
+
+// ─── Platform Settings ────────────────────────────────────────────────────────
+
+model PlatformSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     String   @db.Text
+  type      String   @default("string") // string | number | boolean | json
+  updatedBy String?  @map("updated_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("platform_settings")
+}
+
+// ─── Recently Sold Feed ───────────────────────────────────────────────────────
+
+model RecentlySold {
+  id          String   @id @default(uuid())
+  trackName   String   @map("track_name")
+  genre       String
+  imageUrl    String?  @db.Text @map("image_url")  // base64 data URL or external URL
+  displayOrder Int     @default(0) @map("display_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  soldAt      DateTime @default(now()) @map("sold_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("recently_sold")
+  @@index([isActive, displayOrder])
+}
+
+// ─── Follow System ────────────────────────────────────────────────────────────
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String   @map("follower_id")
+  followingId String   @map("following_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  follower    User     @relation("Followers", fields: [followerId],  references: [id], onDelete: Cascade)
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@map("follows")
+  @@index([followingId])
+}

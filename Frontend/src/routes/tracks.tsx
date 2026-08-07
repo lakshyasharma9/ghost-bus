@@ -1,136 +1,227 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { TRACKS, GENRES } from "@/lib/mock-data";
+import { GENRES } from "@/lib/mock-data";
 import { TrackCard } from "@/components/tracks/TrackCard";
 import { TrackListRow } from "@/components/tracks/TrackListRow";
-import { Filter, X } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/tracks")({
   head: () => ({
     meta: [
-      { title: "Browse Tracks — GhostBus" },
-      { name: "description", content: "Exclusive ghost-produced tracks across all genres. Full rights transfer guaranteed." },
+      { title: "Browse Tracks — GhostBus Ghost Production Marketplace" },
+      { name: "description", content: "Browse exclusive ghost-produced EDM tracks across all genres. Full rights transfer guaranteed. One sale only." },
     ],
   }),
-  component: TracksPage,
+  component: TracksRoot,
 });
+
+function TracksRoot() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const isDetail = pathname.startsWith("/tracks/") && pathname.length > "/tracks/".length;
+  if (isDetail) return <Outlet />;
+  return <TracksPage />;
+}
+
+type SortBy = "newest" | "price-low" | "price-high" | "bpm-low" | "bpm-high";
 
 function TracksPage() {
   const [genre, setGenre] = useState<string | null>(null);
-  const [bpm, setBpm] = useState<[number, number]>([100, 160]);
-  const [maxPrice, setMaxPrice] = useState(800);
-  const [view, setView] = useState<"grid" | "list">("grid");
-  const [drawer, setDrawer] = useState(false);
+  const [bpmRange, setBpmRange] = useState<[number, number]>([60, 250]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([149, 2000]);
+  const [view, setView] = useState<"grid" | "list">("list");
+  const [hideSold, setHideSold] = useState(false);
+  const [sortBy, setSortBy] = useState<SortBy>("newest");
+  const [vocalFilter, setVocalFilter] = useState<"all" | "instrumental" | "with-vocals">("all");
+  const [keyFilter, setKeyFilter] = useState<string | null>(null);
 
-  const filtered = useMemo(
-    () =>
-      TRACKS.filter(
-        (t) =>
-          (!genre || t.genre === genre) &&
-          t.bpm >= bpm[0] && t.bpm <= bpm[1] &&
-          t.price <= maxPrice,
-      ),
-    [genre, bpm, maxPrice],
-  );
+  // Fetch real API tracks
+  const { data: apiTracks } = useQuery({
+    queryKey: ["browse-tracks"],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'}/tracks?limit=50`);
+        if (!res.ok) return [];
+        const json = await res.json();
+        return (json.data?.tracks ?? []).map((t: any) => ({
+          id: t.id, title: t.title,
+          label: t.seller?.fullName || t.seller?.username || 'GhostBus',
+          producer: t.seller?.fullName || t.seller?.username || 'Unknown',
+          genre: t.genre, bpm: t.bpm || 128, musicalKey: t.key || 'C maj',
+          duration: '5:00', price: t.price, artwork: t.coverUrl || '',
+          audioUrl: t.previewUrl || '', sold: t.sold || false, hot: false, original: true,
+          tags: t.tags || [], description: t.description || '', hasVocals: false,
+          seller: t.seller, sellerUsername: t.seller?.username || t.seller?.id,
+        }));
+      } catch { return []; }
+    },
+    staleTime: 30_000,
+  });
+
+  const allTracks = [...(apiTracks ?? [])];
+
+  const filtered = useMemo(() => {
+    let result = allTracks.filter((t) => {
+      if (genre && t.genre !== genre) return false;
+      if (t.bpm < bpmRange[0] || t.bpm > bpmRange[1]) return false;
+      if (t.price < priceRange[0] || t.price > priceRange[1]) return false;
+      if (hideSold && t.sold) return false;
+      if (vocalFilter === "instrumental" && t.hasVocals) return false;
+      if (vocalFilter === "with-vocals" && !t.hasVocals) return false;
+      if (keyFilter && t.musicalKey !== keyFilter) return false;
+      return true;
+    });
+
+    // Sort
+    switch (sortBy) {
+      case "price-low": result.sort((a, b) => a.price - b.price); break;
+      case "price-high": result.sort((a, b) => b.price - a.price); break;
+      case "bpm-low": result.sort((a, b) => a.bpm - b.bpm); break;
+      case "bpm-high": result.sort((a, b) => b.bpm - a.bpm); break;
+      default: break; // newest = default order
+    }
+    return result;
+  }, [allTracks, genre, bpmRange, priceRange, hideSold, sortBy, vocalFilter, keyFilter]);
+
+  const KEYS = ["A min", "A maj", "B min", "B maj", "C min", "C maj", "D min", "D maj", "E min", "E maj", "F min", "F maj", "F# min", "G min", "G maj"];
 
   return (
-    <div className="container-app pt-12">
-      <div className="mb-10">
+    <div className="container-app pt-10 pb-20">
+      {/* Header */}
+      <div className="mb-8">
         <div className="label-eyebrow mb-2">Marketplace</div>
         <h1 className="font-display text-4xl md:text-5xl font-semibold tracking-tight">Browse Tracks</h1>
-        <p className="text-muted-foreground mt-3 max-w-xl">{filtered.length} exclusive tracks · curated · verified unique</p>
+        <p className="text-muted-foreground mt-2 text-sm">{filtered.length} exclusive tracks · A&R verified · one sale only</p>
       </div>
 
-      <div className="flex gap-8">
-        {/* Sidebar */}
-        <aside className="hidden lg:block w-72 shrink-0">
-          <FilterPanel genre={genre} setGenre={setGenre} bpm={bpm} setBpm={setBpm} maxPrice={maxPrice} setMaxPrice={setMaxPrice} />
-        </aside>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-6 gap-3">
-            <button onClick={() => setDrawer(true)} className="lg:hidden h-10 px-4 rounded-full border border-border inline-flex items-center gap-2 text-sm font-medium">
-              <Filter className="w-4 h-4" /> Filters
-            </button>
-            <div className="text-sm text-muted-foreground">{filtered.length} results</div>
-            <div className="ml-auto inline-flex p-1 rounded-full bg-muted text-sm">
-              <button onClick={() => setView("grid")} className={`px-4 h-9 rounded-full ${view === "grid" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}>Grid</button>
-              <button onClick={() => setView("list")} className={`px-4 h-9 rounded-full ${view === "list" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}>List</button>
+      {/* ── Filter Bar (inline, reference-style) ── */}
+      <div className="mb-6 space-y-3">
+        {/* Row 1: Sliders + Sort */}
+        <div className="flex flex-wrap items-end gap-5 p-4 bg-card border border-border rounded-xl">
+          {/* BPM Range */}
+          <div className="flex-1 min-w-[180px]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">BPM</span>
+              <span className="text-xs tabular-nums font-medium">{bpmRange[0]} – {bpmRange[1]}</span>
+            </div>
+            <div className="flex gap-2">
+              <input type="range" min={60} max={250} value={bpmRange[0]} onChange={(e) => setBpmRange([+e.target.value, bpmRange[1]])} className="w-full accent-primary h-1.5" />
+              <input type="range" min={60} max={250} value={bpmRange[1]} onChange={(e) => setBpmRange([bpmRange[0], +e.target.value])} className="w-full accent-primary h-1.5" />
             </div>
           </div>
 
-          {view === "grid" ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
-              {filtered.map((t) => <TrackCard key={t.id} track={t} queue={filtered} />)}
+          {/* Price Range */}
+          <div className="flex-1 min-w-[180px]">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Price</span>
+              <span className="text-xs tabular-nums font-medium">€{priceRange[0]} – €{priceRange[1]}</span>
             </div>
-          ) : (
-            <div className="space-y-2.5">
-              {filtered.map((t) => <TrackListRow key={t.id} track={t} queue={filtered} />)}
+            <div className="flex gap-2">
+              <input type="range" min={149} max={2000} step={50} value={priceRange[0]} onChange={(e) => setPriceRange([+e.target.value, priceRange[1]])} className="w-full accent-primary h-1.5" />
+              <input type="range" min={149} max={2000} step={50} value={priceRange[1]} onChange={(e) => setPriceRange([priceRange[0], +e.target.value])} className="w-full accent-primary h-1.5" />
             </div>
-          )}
+          </div>
+
+          {/* Key Filter */}
+          <div className="min-w-[120px]">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-2">Key</span>
+            <select
+              value={keyFilter ?? ""}
+              onChange={(e) => setKeyFilter(e.target.value || null)}
+              className="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">All Keys</option>
+              {KEYS.map(k => <option key={k} value={k}>{k}</option>)}
+            </select>
+          </div>
+
+          {/* Vocals Filter */}
+          <div className="min-w-[130px]">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-2">Vocals</span>
+            <select
+              value={vocalFilter}
+              onChange={(e) => setVocalFilter(e.target.value as any)}
+              className="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="all">All</option>
+              <option value="instrumental">Instrumental</option>
+              <option value="with-vocals">With Vocals</option>
+            </select>
+          </div>
+
+          {/* Sort */}
+          <div className="min-w-[140px]">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground block mb-2">Sort by</span>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortBy)}
+              className="h-9 w-full px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="newest">Newest</option>
+              <option value="price-low">Price: Low → High</option>
+              <option value="price-high">Price: High → Low</option>
+              <option value="bpm-low">BPM: Low → High</option>
+              <option value="bpm-high">BPM: High → Low</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Row 2: Hide sold toggle */}
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={hideSold}
+              onChange={(e) => setHideSold(e.target.checked)}
+              className="w-4 h-4 rounded border-border text-primary focus:ring-primary/30"
+            />
+            <span className="text-sm font-medium">Hide sold</span>
+          </label>
+        </div>
+
+        {/* Row 3: Genre chips */}
+        <div>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-2">Genres</span>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              onClick={() => setGenre(null)}
+              className={`h-7 px-3 rounded-full text-xs font-medium border transition ${!genre ? "bg-primary text-primary-foreground border-primary" : "border-border bg-card hover:border-primary/40 text-foreground/70"}`}
+            >All</button>
+            {GENRES.map((g) => (
+              <button
+                key={g}
+                onClick={() => setGenre(g === genre ? null : g)}
+                className={`h-7 px-3 rounded-full text-xs font-medium border transition ${genre === g ? "bg-primary text-primary-foreground border-primary" : "border-border bg-card hover:border-primary/40 text-foreground/70"}`}
+              >{g}</button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {drawer && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-black/40" onClick={() => setDrawer(false)}>
-          <div className="absolute right-0 top-0 bottom-0 w-[320px] bg-background p-6 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-6">
-              <span className="font-semibold">Filters</span>
-              <button onClick={() => setDrawer(false)} className="w-9 h-9 grid place-items-center rounded-full hover:bg-muted"><X className="w-5 h-5" /></button>
-            </div>
-            <FilterPanel genre={genre} setGenre={setGenre} bpm={bpm} setBpm={setBpm} maxPrice={maxPrice} setMaxPrice={setMaxPrice} />
-          </div>
+      {/* ── Results header ── */}
+      <div className="flex items-center justify-between mb-6 gap-3">
+        <div className="text-sm text-muted-foreground">{filtered.length} results</div>
+        <div className="inline-flex p-1 rounded-full bg-muted text-sm">
+          <button onClick={() => setView("grid")} className={`px-4 h-8 rounded-full transition ${view === "grid" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}>Grid</button>
+          <button onClick={() => setView("list")} className={`px-4 h-8 rounded-full transition ${view === "list" ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}>List</button>
+        </div>
+      </div>
+
+      {/* ── Track Listing ── */}
+      {filtered.length === 0 ? (
+        <div className="py-16 text-center bg-card border border-border rounded-2xl">
+          <p className="font-semibold mb-1">No tracks found</p>
+          <p className="text-sm text-muted-foreground">Try adjusting your filters.</p>
+        </div>
+      ) : view === "grid" ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          {filtered.map((t) => <TrackCard key={t.id} track={t} queue={filtered} />)}
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {filtered.map((t) => <TrackListRow key={t.id} track={t} queue={filtered} />)}
         </div>
       )}
-    </div>
-  );
-}
-
-function FilterPanel(props: {
-  genre: string | null; setGenre: (g: string | null) => void;
-  bpm: [number, number]; setBpm: (b: [number, number]) => void;
-  maxPrice: number; setMaxPrice: (n: number) => void;
-}) {
-  return (
-    <div className="space-y-8 sticky top-24">
-      <div>
-        <div className="label-eyebrow mb-3">Genre</div>
-        <div className="flex flex-wrap gap-1.5">
-          <button
-            onClick={() => props.setGenre(null)}
-            className={`h-8 px-3 rounded-full text-xs font-medium border ${!props.genre ? "bg-primary text-primary-foreground border-primary" : "border-border bg-card hover:border-primary/40"}`}
-          >All</button>
-          {GENRES.map((g) => (
-            <button
-              key={g}
-              onClick={() => props.setGenre(g === props.genre ? null : g)}
-              className={`h-8 px-3 rounded-full text-xs font-medium border ${props.genre === g ? "bg-primary text-primary-foreground border-primary" : "border-border bg-card hover:border-primary/40"}`}
-            >{g}</button>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <span className="label-eyebrow">BPM</span>
-          <span className="text-xs tabular-nums">{props.bpm[0]}–{props.bpm[1]}</span>
-        </div>
-        <input type="range" min={80} max={180} value={props.bpm[0]} onChange={(e) => props.setBpm([parseInt(e.target.value), props.bpm[1]])} className="w-full accent-primary" />
-        <input type="range" min={80} max={180} value={props.bpm[1]} onChange={(e) => props.setBpm([props.bpm[0], parseInt(e.target.value)])} className="w-full accent-primary" />
-      </div>
-
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <span className="label-eyebrow">Max Price</span>
-          <span className="text-xs tabular-nums">${props.maxPrice}</span>
-        </div>
-        <input type="range" min={100} max={1000} step={50} value={props.maxPrice} onChange={(e) => props.setMaxPrice(parseInt(e.target.value))} className="w-full accent-primary" />
-      </div>
-
-      <button onClick={() => { props.setGenre(null); props.setBpm([100, 160]); props.setMaxPrice(800); }} className="text-sm text-primary font-medium">
-        Reset filters
-      </button>
     </div>
   );
 }

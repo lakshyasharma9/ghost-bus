@@ -1,19 +1,36 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { ArrowRight, TrendingUp, Loader2 } from "lucide-react";
-import { useSellerStats, useSellerOrders } from "@/hooks/use-api";
+import { useSellerStats, useSellerOrders, useMyTracks } from "@/hooks/use-api";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { SellerModeToggle } from "@/components/auth/SellerModeToggle";
 
 export const Route = createFileRoute("/dashboard/")({
   head: () => ({ meta: [{ title: "Overview — Dashboard" }] }),
   component: DashboardOverview,
 });
 
-const TOP_GENRES = [["Tech House", 42], ["Melodic Techno", 28], ["Afro House", 18], ["Bass House", 12]] as const;
-
 function DashboardOverview() {
+  const { sellerModeEnabled } = useAuthContext();
   const { data: statsRaw, isLoading: statsLoading } = useSellerStats();
   const stats = statsRaw as any;
   const { data: orders = [], isLoading: ordersLoading } = useSellerOrders();
+  const { data: myTracksData } = useMyTracks();
+  const myTracks: any[] = Array.isArray(myTracksData) ? myTracksData : [];
   const recentSales = (orders as any[]).filter((o) => o.status === "paid").slice(0, 5);
+
+  // Calculate real top genres from seller's own tracks
+  const genreCounts: Record<string, number> = {};
+  myTracks.forEach((t: any) => { genreCounts[t.genre] = (genreCounts[t.genre] || 0) + 1; });
+  const totalTracks = myTracks.length || 1;
+  const topGenres = Object.entries(genreCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4)
+    .map(([genre, count]) => [genre, Math.round((count / totalTracks) * 100)] as [string, number]);
+
+  // If seller mode disabled, redirect to buyer dashboard
+  if (!sellerModeEnabled) {
+    return <Navigate to="/account" />;
+  }
 
   const statCards = [
     { label: "Total Earned", value: statsLoading ? "—" : `$${(stats?.total_earned ?? 0).toLocaleString()}`, change: "", up: null },
@@ -27,11 +44,16 @@ function DashboardOverview() {
       <div className="mb-8 flex items-end justify-between gap-4 flex-wrap">
         <div>
           <div className="label-eyebrow mb-2">Welcome back</div>
-          <h1 className="font-display text-3xl md:text-4xl font-semibold tracking-tight">Studio overview</h1>
+          <h1 className="font-display text-3xl md:text-4xl font-semibold tracking-tight">Seller Dashboard</h1>
         </div>
-        <Link to="/dashboard/upload" className="h-10 px-5 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-[0_8px_24px_rgba(10,132,255,0.28)]">
+        <Link to="/dashboard/upload" className="h-10 px-5 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-[0_8px_24px_rgba(6,2,38,0.35)]">
           Upload Track <ArrowRight className="w-4 h-4" />
         </Link>
+      </div>
+
+      {/* Seller Mode Toggle */}
+      <div className="mb-6">
+        <SellerModeToggle />
       </div>
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -56,9 +78,16 @@ function DashboardOverview() {
             </div>
           </div>
           <div className="h-44 flex items-end gap-1">
-            {Array.from({ length: 30 }).map((_, i) => (
-              <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-primary/50 to-primary hover:from-primary/70 hover:to-primary transition-colors cursor-pointer" style={{ height: `${20 + Math.abs(Math.sin(i * 0.7)) * 80}%` }} />
-            ))}
+            {stats?.earned_this_month > 0
+              ? Array.from({ length: 30 }).map((_, i) => (
+                  <div key={i} className="flex-1 rounded-t bg-gradient-to-t from-primary/50 to-primary" style={{ height: `${20 + Math.abs(Math.sin(i * 0.7)) * 80}%` }} />
+                ))
+              : (
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">
+                  No earnings data yet — sell your first track!
+                </div>
+              )
+            }
           </div>
           <div className="flex justify-between text-xs text-muted-foreground mt-2">
             <span>Day 1</span><span>Day 10</span><span>Day 20</span><span>Day 30</span>
@@ -68,7 +97,7 @@ function DashboardOverview() {
         <div className="p-6 rounded-2xl bg-card border border-border">
           <div className="label-eyebrow mb-4">Top genres</div>
           <ul className="space-y-3">
-            {TOP_GENRES.map(([g, p]) => (
+            {topGenres.length > 0 ? topGenres.map(([g, p]) => (
               <li key={g}>
                 <div className="flex justify-between text-sm mb-1.5">
                   <span className="font-medium">{g}</span>
@@ -78,7 +107,9 @@ function DashboardOverview() {
                   <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${p}%` }} />
                 </div>
               </li>
-            ))}
+            )) : (
+              <li className="text-sm text-muted-foreground py-4 text-center">Upload tracks to see genre distribution</li>
+            )}
           </ul>
         </div>
       </div>

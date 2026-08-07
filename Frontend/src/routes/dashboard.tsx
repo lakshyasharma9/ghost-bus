@@ -1,5 +1,7 @@
-import { createFileRoute, Link, Outlet, useRouterState } from "@tanstack/react-router";
-import { LayoutDashboard, Upload, Music, DollarSign, MessageCircle, BarChart3, ShieldCheck, Settings } from "lucide-react";
+import { createFileRoute, Link, Outlet, useRouterState, useNavigate } from "@tanstack/react-router";
+import { LayoutDashboard, Upload, Music, DollarSign, BarChart3, ShieldCheck, Settings, Loader2 } from "lucide-react";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({ meta: [{ title: "Dashboard — GhostBus" }] }),
@@ -8,20 +10,53 @@ export const Route = createFileRoute("/dashboard")({
 
 const NAV = [
   { to: "/dashboard/", label: "Overview", icon: LayoutDashboard },
+  { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/dashboard/upload", label: "Upload", icon: Upload },
   { to: "/dashboard/tracks", label: "My Tracks", icon: Music },
   { to: "/dashboard/earnings", label: "Earnings", icon: DollarSign },
-  { to: "/dashboard/messages", label: "Messages", icon: MessageCircle },
-  { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/dashboard/kyc", label: "KYC", icon: ShieldCheck },
+  { to: "/dashboard/kyc", label: "Account Verification", icon: ShieldCheck },
   { to: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 function DashboardLayout() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { user, loading, isAuthenticated, isSeller, sellerModeEnabled } = useAuthContext();
+  const navigate = useNavigate();
+
+  // ── Auth guard: redirect to login if not authenticated ──
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate({ to: "/login", search: { redirect: "/dashboard" } });
+    }
+  }, [loading, isAuthenticated, navigate]);
+
+  // ── Seller guard: if logged in but not a seller/sellerMode, redirect to apply ──
+  useEffect(() => {
+    if (!loading && isAuthenticated && !isSeller && !sellerModeEnabled) {
+      navigate({ to: "/apply-seller" });
+    }
+  }, [loading, isAuthenticated, isSeller, sellerModeEnabled, navigate]);
+
+  // Show loading spinner while auth is resolving
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // Block render until auth is confirmed — avoids flash of dashboard
+  if (!isAuthenticated || (!isSeller && !sellerModeEnabled)) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="container-app pt-10 pb-24 grid lg:grid-cols-[240px_1fr] gap-8">
+    <div className="container-app pt-10 pb-16 grid lg:grid-cols-[240px_1fr] gap-8">
       <aside className="hidden lg:block">
         <div className="sticky top-24 space-y-1">
           <div className="label-eyebrow px-3 mb-3">Seller</div>

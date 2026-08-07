@@ -25,7 +25,7 @@ function Sell() {
           Join the most curated ghost-production marketplace. Exclusive sales, transparent pricing, instant payouts.
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link to="/login" className="h-12 px-6 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground font-medium shadow-[0_10px_30px_rgba(10,132,255,0.28)]">
+          <Link to="/login" className="h-12 px-6 inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground font-medium shadow-[0_10px_30px_rgba(6,2,38,0.35)]">
             Apply as a Seller <ArrowRight className="w-4 h-4" />
           </Link>
           <Link to="/how-we-work" className="h-12 px-6 inline-flex items-center rounded-full border border-border font-medium">How we work</Link>

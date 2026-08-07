@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, Link, useNavigate } from "@tanstack/react-router";
-import { useAuth } from "@/hooks/use-auth";
-import { Home, ShoppingBag, Heart, Users, User, Mail, LogOut } from "lucide-react";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { Home, ShoppingBag, Heart, Users, User, Mail, LogOut, Headphones } from "lucide-react";
 import { useEffect } from "react";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -10,7 +10,7 @@ export const Route = createFileRoute("/account")({
 });
 
 function AccountLayout() {
-  const { user, loading, signOut } = useAuth();
+  const { user, profile, loading, signOut } = useAuthContext();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,7 +24,7 @@ function AccountLayout() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-[#0A84FF] to-[#5BA7FF] grid place-items-center text-white font-bold text-sm animate-pulse">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br from-[#060226] to-[#1a0a5e] grid place-items-center text-white font-bold text-sm animate-pulse">
             G
           </div>
           <p className="mt-4 text-sm text-muted-foreground">Loading...</p>
@@ -36,7 +36,7 @@ function AccountLayout() {
   // Don't render if not authenticated
   if (!user) return null;
 
-  const firstName = user.user_metadata?.first_name || user.email?.split("@")[0] || "User";
+  const firstName = profile?.full_name?.split(' ')[0] || user?.email?.split("@")[0] || "User";
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -48,7 +48,7 @@ function AccountLayout() {
           {/* Sidebar */}
           <aside className="w-64 shrink-0">
             <nav className="sticky top-20 space-y-1">
-              <NavLink to="/account" icon={<Home className="w-4 h-4" />}>
+              <NavLink to="/account" icon={<Home className="w-4 h-4" />} exact>
                 Account Overview
               </NavLink>
               <NavLink to="/apply-seller" icon={<User className="w-4 h-4" />}>
@@ -64,10 +64,13 @@ function AccountLayout() {
                 Following
               </NavLink>
               <NavLink to="/account/profile" icon={<User className="w-4 h-4" />}>
-                Edit Profile
+                Account Settings
               </NavLink>
               <NavLink to="/account/mailing" icon={<Mail className="w-4 h-4" />}>
                 Mailing
+              </NavLink>
+              <NavLink to="/account/support" icon={<Headphones className="w-4 h-4" />}>
+                Support Tickets
               </NavLink>
               <button
                 onClick={() => signOut()}
@@ -92,12 +95,13 @@ function AccountLayout() {
   );
 }
 
-function NavLink({ to, icon, children }: { to: string; icon: React.ReactNode; children: React.ReactNode }) {
+function NavLink({ to, icon, children, exact }: { to: string; icon: React.ReactNode; children: React.ReactNode; exact?: boolean }) {
   return (
     <Link
       to={to}
       className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-muted rounded-xl transition-colors"
-      activeProps={{ className: "bg-accent text-primary font-medium" }}
+      activeProps={{ className: "flex items-center gap-3 px-4 py-2.5 text-sm rounded-xl transition-colors bg-accent text-primary font-medium" }}
+      activeOptions={exact ? { exact: true } : undefined}
     >
       {icon}
       {children}
