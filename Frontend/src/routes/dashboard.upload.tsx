@@ -182,43 +182,85 @@ function UploadPage() {
       return;
     }
 
-    // Step 5 = final submit — send to real backend API
+    // Step 5 = final submit — upload files directly to S3, then finalize
     if (step === 5) {
       setVerifying(true);
       try {
-        const fd = new FormData();
-
-        // ── Required files ──
+        // ── Required files check ──
         if (!files.mastered || !files.unmastered || !files.stems || !files.artwork) {
           toast.error("Required files are missing.");
           setVerifying(false);
           return;
         }
-        fd.append("mastered",   files.mastered);
-        fd.append("unmastered", files.unmastered);
-        fd.append("stems",      files.stems);
-        fd.append("artwork",    files.artwork);
-        if (files.midi)    fd.append("midi",    files.midi);
-        if (files.lyrics)  fd.append("lyrics",  files.lyrics);
-        // Optional preview versions
-        if (files.radioEdit)     fd.append("radioEdit",     files.radioEdit);
-        if (files.extendedMix)   fd.append("extendedMix",   files.extendedMix);
-        if (files.instrumental)  fd.append("instrumental",  files.instrumental);
 
-        // ── Metadata ──
-        fd.append("title",        meta.title.trim());
-        fd.append("genre",        meta.genre);
-        fd.append("bpm",          meta.bpm);
-        fd.append("key",          meta.key);
-        fd.append("description",  meta.description.trim());
-        fd.append("price",        price);
-        fd.append("transparency", transparency!);
-        fd.append("vocalType",    meta.vocalType);
-        fd.append("isExclusive",  "true");
+        // ── Step 1: Get presigned upload URLs from backend ──
+        const fileList: { field: string; fileName: string; contentType: string; size: number }[] = [];
+        const fileEntries: { field: string; file: File }[] = [];
 
-        const { data } = await apiClient.post("/tracks", fd, {
-          headers: { "Content-Type": "multipart/form-data" },
-          timeout: 5 * 60 * 1000, // 5 min timeout for large files
+        const addFile = (field: string, file: File | null | undefined) => {
+          if (!file) return;
+          fileList.push({ field, fileName: file.name, contentType: file.type || 'application/octet-stream', size: file.size });
+          fileEntries.push({ field, file });
+        };
+
+        addFile('mastered', files.mastered);
+        addFile('unmastered', files.unmastered);
+        addFile('stems', files.stems);
+        addFile('artwork', files.artwork);
+        addFile('midi', files.midi);
+        addFile('lyrics', files.lyrics);
+        addFile('radioEdit', files.radioEdit);
+        addFile('extendedMix', files.extendedMix);
+        addFile('instrumental', files.instrumental);
+
+        toast.info("Requesting upload slots...");
+
+        const initRes = await apiClient.post("/tracks/init-upload", { files: fileList });
+        const { uploadUrls } = initRes.data.data;
+
+        // ── Step 2: Upload all files directly to S3 in parallel ──
+        toast.info("Uploading files to cloud storage...");
+
+        const uploadPromises = fileEntries.map(async ({ field, file }) => {
+          const { uploadUrl } = uploadUrls[field];
+          const res = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': file.type || 'application/octet-stream',
+            },
+            body: file,
+          });
+          if (!res.ok) throw new Error(`Failed to upload ${field}: HTTP ${res.status}`);
+          return { field, key: uploadUrls[field].key };
+        });
+
+        const uploadResults = await Promise.all(uploadPromises);
+
+        // Build s3Keys map
+        const s3Keys: Record<string, string> = {};
+        const fileSizes: Record<string, number> = {};
+        for (const { field, key } of uploadResults) {
+          s3Keys[field] = key;
+        }
+        for (const { field, file } of fileEntries) {
+          fileSizes[field] = file.size;
+        }
+
+        // ── Step 3: Finalize — send metadata + S3 keys to backend ──
+        toast.info("Finalizing submission...");
+
+        const { data } = await apiClient.post("/tracks/finalize-upload", {
+          title:        meta.title.trim(),
+          genre:        meta.genre,
+          bpm:          parseInt(meta.bpm),
+          key:          meta.key,
+          description:  meta.description.trim(),
+          price:        parseFloat(price),
+          transparency: transparency!,
+          vocalType:    meta.vocalType,
+          isExclusive:  "true",
+          s3Keys,
+          fileSizes,
         });
 
         // Invalidate my-tracks cache so dashboard shows the new track
@@ -226,7 +268,7 @@ function UploadPage() {
 
         setVerifying(false);
         setVerified(true);
-        clearDraft(); // ── Clear saved draft on successful submit ──
+        clearDraft();
         setHasDraft(false);
         toast.success("Track submitted for A&R review!");
       } catch (err: any) {

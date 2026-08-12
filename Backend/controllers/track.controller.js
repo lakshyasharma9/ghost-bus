@@ -6,6 +6,7 @@ import {
   getPreviewUrl,
   getSignedDownloadUrl,
   getPurchaseDownloadUrl,
+  getPresignedUploadUrl,
 } from '../utils/s3.js';
 import { errorResponse, successResponse } from '../utils/response.js';
 import { submitTrackForMRT, getMRTResult, parseMRTVerdict } from '../utils/acrcloud.js';
@@ -793,6 +794,184 @@ export async function getSellerStats(req, res) {
   } catch (error) {
     console.error('Get seller stats error:', error);
     return errorResponse(res, 500, 'Failed to fetch seller stats');
+  }
+}
+
+// ─── Direct S3 Upload (Presigned URLs) ────────────────────────────────────────
+
+/**
+ * POST /api/v1/tracks/init-upload
+ * Seller requests presigned PUT URLs for direct browser-to-S3 upload.
+ * 
+ * Body: { files: [{ field, fileName, contentType, size }] }
+ * Returns: { uploadUrls: { [field]: { key, uploadUrl } } }
+ */
+export async function initTrackUpload(req, res) {
+  try {
+    const sellerId = req.user.id;
+    const { files } = req.body;
+
+    if (!files || !Array.isArray(files) || files.length === 0) {
+      return errorResponse(res, 400, 'files array is required');
+    }
+
+    // Validate file list
+    const VALID_FIELDS = ['mastered', 'unmastered', 'stems', 'midi', 'artwork', 'lyrics', 'radioEdit', 'extendedMix', 'instrumental'];
+    const FOLDER_MAP = {
+      mastered: 'tracks/audio/mastered',
+      unmastered: 'tracks/audio/unmastered',
+      stems: 'tracks/stems',
+      midi: 'tracks/midi',
+      artwork: 'tracks/artwork',
+      lyrics: 'tracks/lyrics',
+      radioEdit: 'tracks/previews/radio-edit',
+      extendedMix: 'tracks/previews/extended-mix',
+      instrumental: 'tracks/previews/instrumental',
+    };
+
+    const uploadUrls = {};
+
+    for (const f of files) {
+      if (!f.field || !f.fileName || !f.contentType) {
+        return errorResponse(res, 400, `Each file must have field, fileName, contentType`);
+      }
+      if (!VALID_FIELDS.includes(f.field)) {
+        return errorResponse(res, 400, `Invalid field: ${f.field}`);
+      }
+
+      const folder = FOLDER_MAP[f.field];
+      const result = await getPresignedUploadUrl(folder, sellerId, f.fileName, f.contentType, f.size || 0);
+      uploadUrls[f.field] = { key: result.key, uploadUrl: result.uploadUrl };
+    }
+
+    return successResponse(res, 200, 'Upload URLs generated', { uploadUrls });
+  } catch (error) {
+    console.error('Init upload error:', error);
+    return errorResponse(res, 500, 'Failed to generate upload URLs');
+  }
+}
+
+/**
+ * POST /api/v1/tracks/finalize-upload
+ * After browser uploads files directly to S3, seller finalizes with metadata + S3 keys.
+ * 
+ * Body: { title, genre, bpm, key, price, transparency, vocalType, description, tags, isExclusive,
+ *          s3Keys: { mastered, unmastered, stems, midi?, artwork, lyrics?, radioEdit?, extendedMix?, instrumental? },
+ *          fileSizes: { mastered, unmastered, stems, midi?, artwork, lyrics?, radioEdit?, extendedMix?, instrumental? } }
+ */
+export async function finalizeTrackUpload(req, res) {
+  try {
+    const sellerId = req.user.id;
+    const {
+      title, genre, bpm, key, description,
+      price, isExclusive, transparency, tags, vocalType,
+      s3Keys, fileSizes,
+    } = req.body;
+
+    // Validate metadata
+    if (!title?.trim())       return errorResponse(res, 400, 'Track title is required');
+    if (!genre?.trim())       return errorResponse(res, 400, 'Genre is required');
+    if (!bpm)                 return errorResponse(res, 400, 'BPM is required');
+    if (!key?.trim())         return errorResponse(res, 400, 'Musical key is required');
+    if (!price)               return errorResponse(res, 400, 'Price is required');
+    if (!transparency)        return errorResponse(res, 400, 'Transparency declaration is required');
+
+    const bpmInt     = safeInt(bpm);
+    const priceFloat = safeFloat(price);
+
+    if (!bpmInt || bpmInt < 60 || bpmInt > 220) {
+      return errorResponse(res, 400, 'BPM must be between 60 and 220');
+    }
+    if (!priceFloat || priceFloat < MIN_PRICE || priceFloat > MAX_PRICE) {
+      return errorResponse(res, 400, `Price must be between €${MIN_PRICE} and €${MAX_PRICE}`);
+    }
+    if (!['original', 'loops'].includes(transparency)) {
+      return errorResponse(res, 400, 'Invalid transparency value');
+    }
+
+    // Validate S3 keys
+    if (!s3Keys) return errorResponse(res, 400, 's3Keys object is required');
+    if (!s3Keys.mastered)   return errorResponse(res, 400, 'mastered S3 key is required');
+    if (!s3Keys.unmastered) return errorResponse(res, 400, 'unmastered S3 key is required');
+    if (!s3Keys.stems)      return errorResponse(res, 400, 'stems S3 key is required');
+    if (!s3Keys.artwork)    return errorResponse(res, 400, 'artwork S3 key is required');
+
+    const resolvedVocalType = vocalType && VALID_VOCAL_TYPES.includes(vocalType) ? vocalType : 'none';
+
+    // Lyrics required for vocal tracks
+    if (VOCAL_TYPES_REQUIRING_LYRICS.includes(resolvedVocalType) && !s3Keys.lyrics) {
+      return errorResponse(res, 400, `Lyrics PDF required for "${resolvedVocalType}" vocal type`);
+    }
+
+    // Calculate fees
+    const platformFee   = Math.round(priceFloat * PLATFORM_FEE_PCT * 100) / 100;
+    const sellerPayout  = Math.round(priceFloat * SELLER_PAYOUT_PCT * 100) / 100;
+
+    // Save to database — same structure as old uploadTrack
+    const track = await prisma.track.create({
+      data: {
+        sellerId,
+        title:       title.trim(),
+        description: description?.trim() || null,
+        genre:       genre.trim(),
+        bpm:         bpmInt,
+        key:         key.trim(),
+        price:       priceFloat,
+        audioUrl:    s3Keys.mastered,
+        coverUrl:    s3Keys.artwork,
+        tags:        parseTags(tags),
+        isExclusive: isExclusive === 'false' ? false : true,
+        status:      'PENDING',
+        waveformData: {
+          unmasteredKey:   s3Keys.unmastered,
+          stemsKey:        s3Keys.stems,
+          midiKey:         s3Keys.midi || null,
+          lyricsKey:       s3Keys.lyrics || null,
+          radioEditKey:    s3Keys.radioEdit || null,
+          extendedMixKey:  s3Keys.extendedMix || null,
+          instrumentalKey: s3Keys.instrumental || null,
+          vocalType:       resolvedVocalType,
+          transparency,
+          platformFee,
+          sellerPayout,
+          platformFeePct:  PLATFORM_FEE_PCT,
+          sellerPayoutPct: SELLER_PAYOUT_PCT,
+          mrtStatus:       'scanning',
+          mrtFileId:       null,
+          mrtVerdict:      null,
+          mrtScannedAt:    null,
+          fileSizes:       fileSizes || {},
+        },
+        fileSize: BigInt(fileSizes?.mastered || 0),
+      },
+      select: {
+        id: true, title: true, genre: true, bpm: true,
+        key: true, price: true, status: true, tags: true,
+        isExclusive: true, createdAt: true,
+      },
+    });
+
+    // Trigger MRT + FFmpeg pipelines (async, non-blocking)
+    triggerMRTScan(track.id, s3Keys.mastered).catch((err) => {
+      console.error(`[MRT] Failed to trigger scan for track ${track.id}:`, err.message);
+    });
+    triggerFFmpegPipeline(track.id, s3Keys.mastered, s3Keys.stems).catch((err) => {
+      console.error(`[FFmpeg] Pipeline failed for track ${track.id}:`, err.message);
+    });
+
+    return successResponse(res, 201, 'Track submitted for review', {
+      track: {
+        ...track,
+        price: Number(track.price),
+        platformFee,
+        sellerPayout,
+        vocalType: resolvedVocalType,
+        mrtStatus: 'scanning',
+      },
+    });
+  } catch (error) {
+    console.error('Finalize upload error:', error);
+    return errorResponse(res, 500, `Upload failed: ${error.message || 'Unknown error'}`);
   }
 }
 

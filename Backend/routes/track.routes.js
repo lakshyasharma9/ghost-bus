@@ -15,6 +15,8 @@ import {
   getTrackPreviewUrl,
   getTrackMRTStatus,
   retriggerMRTScan,
+  initTrackUpload,
+  finalizeTrackUpload,
 } from '../controllers/track.controller.js';
 
 const router = express.Router();
@@ -86,8 +88,43 @@ router.get(
 // ─── Protected Routes (Seller) ────────────────────────────────────────────────
 
 /**
+ * POST /api/v1/tracks/init-upload
+ * Get presigned S3 PUT URLs for direct browser upload
+ */
+router.post(
+  '/init-upload',
+  authenticate,
+  requireSellerMode,
+  uploadRateLimit,
+  (req, res) => initTrackUpload(req, res)
+);
+
+/**
+ * POST /api/v1/tracks/finalize-upload
+ * Finalize track submission after direct S3 upload
+ */
+router.post(
+  '/finalize-upload',
+  authenticate,
+  requireSellerMode,
+  [
+    body('title').trim().notEmpty().withMessage('Title is required').isLength({ max: 200 }),
+    body('genre').trim().notEmpty().withMessage('Genre is required').isLength({ max: 100 }),
+    body('bpm').isInt({ min: 60, max: 220 }).withMessage('BPM must be between 60 and 220'),
+    body('key').trim().notEmpty().withMessage('Musical key is required').isLength({ max: 20 }),
+    body('price').isFloat({ min: 149, max: 2000 }).withMessage('Price must be between €149 and €2000'),
+    body('transparency').isIn(['original', 'loops']).withMessage('Invalid transparency value'),
+    body('vocalType').optional().isIn(['none', 'exclusive', 'ai']).withMessage('Invalid vocal type'),
+    body('description').optional().trim().isLength({ max: 2000 }),
+    body('s3Keys').notEmpty().withMessage('s3Keys object is required'),
+    validate,
+  ],
+  (req, res) => finalizeTrackUpload(req, res)
+);
+
+/**
  * POST /api/v1/tracks
- * Upload a new track (multipart/form-data)
+ * Upload a new track (multipart/form-data) — LEGACY fallback
  */
 router.post(
   '/',

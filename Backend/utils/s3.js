@@ -235,3 +235,43 @@ export async function getPreviewUrl(key) {
 export async function getPurchaseDownloadUrl(key) {
   return getSignedDownloadUrl(key, 900);
 }
+
+/**
+ * Generate a presigned PUT URL for direct browser-to-S3 uploads.
+ * Returns { key, uploadUrl, expiresIn }
+ */
+export async function getPresignedUploadUrl(folder, sellerId, originalName, contentType, fileSize) {
+  const key = buildKey(folder, sellerId, originalName);
+  const bucket = getBucket();
+  const regionMatch = (bucket || '').match(/ap-southeast-2|us-east-1|eu-west-1|ap-south-1|ap-northeast-1/);
+  const region = regionMatch ? regionMatch[0] : (process.env.AWS_REGION || 'ap-southeast-2');
+
+  // Use a clean client without checksum issues for PUT presigned URLs
+  const { S3Client: S3C, PutObjectCommand: POC } = await import('@aws-sdk/client-s3');
+  const { getSignedUrl: gsu } = await import('@aws-sdk/s3-request-presigner');
+
+  const client = new S3C({
+    region,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
+  });
+
+  const command = new POC({
+    Bucket: bucket,
+    Key: key,
+    ContentType: contentType,
+    ServerSideEncryption: 'AES256',
+    Metadata: {
+      uploadedBy: sellerId,
+      originalName: Buffer.from(originalName).toString('base64'),
+      uploadedAt: new Date().toISOString(),
+    },
+  });
+
+  const uploadUrl = await gsu(client, command, { expiresIn: 3600 }); // 1 hour
+  return { key, uploadUrl, expiresIn: 3600 };
+}
