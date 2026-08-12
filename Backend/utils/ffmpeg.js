@@ -165,27 +165,40 @@ export async function generatePreviewMP3(masteredS3Key, watermarkS3Key, trackId)
 
     let result;
     if (wmFilePath && wm2FilePath) {
-      // Full-length watermarked preview
-      // Watermark repeats every 15 seconds throughout the entire track
-      // Uses amix with looped watermark overlaid on the full track
-      // Strategy: create watermark instances at 0s, 15s, 30s, 45s, 60s, 75s, 90s, 105s, 120s, 135s, 150s
-      // Since we only have 2 watermark files uploaded, use the AI endpoint for complex looping
-      result = await ffmpegRequest('POST', '/ai/ffmpeg/process', {
-        inputs: [
-          { file_path: masteredUpload.file_path },
-          { file_path: wmFilePath },
-        ],
-        instructions: `Mix these two audio files together to create a watermarked preview. The first file is the main music track. The second file is a short voice watermark tag. Overlay the watermark voice on top of the music, repeating the watermark every 15 seconds throughout the entire duration of the main track. The watermark volume should be at 35% of the original watermark level so the music is still clearly audible. Keep the full length of the main track. Apply a 3-second fade-out at the very end. Output as MP3 320kbps stereo. Output filename: ${outputFile}`,
-        output_dir_id: dir_id,
+      // Full-length watermarked preview — watermark loops every 15 seconds
+      // Strategy: loop the watermark audio infinitely, delay by 0s,
+      // mix with the full track, let duration=first so it ends when track ends
+      // The watermark file is ~2-3 seconds, so we add 12-13s of silence padding
+      // using adelay to space them 15s apart
+      // Simpler approach: use aloop to repeat watermark, trim to track length
+      result = await ffmpegRequest('POST', '/ffmpeg/process', {
+        task: {
+          inputs: [
+            { file_path: masteredUpload.file_path },  // [0] main track
+            { file_path: wmFilePath },                 // [1] watermark
+          ],
+          filter_complex: [
+            // Loop watermark: -1 = infinite loops, size = 15 seconds of samples at 44100Hz
+            '[1:a]aloop=loop=-1:size=661500,asetpts=PTS-STARTPTS,volume=0.35[wm]',
+            // Mix main track with looped watermark, end when main track ends
+            '[0:a][wm]amix=inputs=2:duration=first:normalize=0[out]',
+          ].join(';'),
+          outputs: [{
+            file: outputFile,
+            options: ['-c:a', 'libmp3lame', '-b:a', '320k', '-ac', '2'],
+            maps: ['[out]'],
+          }],
+          output_dir_id: dir_id,
+        },
       });
     } else {
-      // No watermark — full length MP3 with fade out
+      // No watermark — full length MP3
       result = await ffmpegRequest('POST', '/ffmpeg/process', {
         task: {
           inputs: [{ file_path: masteredUpload.file_path }],
           outputs: [{
             file: outputFile,
-            options: ['-c:a', 'libmp3lame', '-b:a', '320k', '-ac', '2', '-af', 'afade=t=out:st=27:d=3'],
+            options: ['-c:a', 'libmp3lame', '-b:a', '320k', '-ac', '2'],
           }],
           output_dir_id: dir_id,
         },
