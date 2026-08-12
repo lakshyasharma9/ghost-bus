@@ -1,13 +1,17 @@
 import multer from 'multer';
 import os from 'os';
 import path from 'path';
+import { mkdirSync } from 'fs';
 import { errorResponse } from '../utils/response.js';
 
 // ─── Store files on disk (prevents OOM on large uploads) ─────────────────────
-// Files are written to OS temp dir, then streamed to S3, then auto-deleted
+// Use a custom directory on the main disk (not tmpfs which is RAM-limited)
+const UPLOAD_DIR = path.resolve(process.cwd(), 'tmp-uploads');
+try { mkdirSync(UPLOAD_DIR, { recursive: true }); } catch {}
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, os.tmpdir());
+    cb(null, UPLOAD_DIR);
   },
   filename: (req, file, cb) => {
     const unique = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
