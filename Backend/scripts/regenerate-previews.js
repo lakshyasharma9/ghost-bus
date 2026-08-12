@@ -24,8 +24,8 @@ async function main() {
 
   const needsPreview = tracks.filter(t => {
     const p = t.waveformData?.ffmpegPreviewUrl;
-    // Needs regeneration if: no preview, or preview is an expired CDN URL (not an S3 key)
-    return !p || p.startsWith('http');
+    // Force regenerate ALL — full length watermarks
+    return true;
   });
   console.log(`Found ${tracks.length} approved tracks, ${needsPreview.length} need preview generation.\n`);
 
