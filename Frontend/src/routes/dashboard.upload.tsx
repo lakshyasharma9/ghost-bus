@@ -222,11 +222,11 @@ function UploadPage() {
         toast.info("Uploading files to cloud storage...");
 
         const uploadPromises = fileEntries.map(async ({ field, file }) => {
-          const { uploadUrl } = uploadUrls[field];
+          const { uploadUrl, contentType } = uploadUrls[field];
           const res = await fetch(uploadUrl, {
             method: 'PUT',
             headers: {
-              'Content-Type': file.type || 'application/octet-stream',
+              'Content-Type': contentType || file.type || 'application/octet-stream',
             },
             body: file,
           });

@@ -841,7 +841,7 @@ export async function initTrackUpload(req, res) {
 
       const folder = FOLDER_MAP[f.field];
       const result = await getPresignedUploadUrl(folder, sellerId, f.fileName, f.contentType, f.size || 0);
-      uploadUrls[f.field] = { key: result.key, uploadUrl: result.uploadUrl };
+      uploadUrls[f.field] = { key: result.key, uploadUrl: result.uploadUrl, contentType: result.contentType };
     }
 
     return successResponse(res, 200, 'Upload URLs generated', { uploadUrls });

@@ -264,14 +264,8 @@ export async function getPresignedUploadUrl(folder, sellerId, originalName, cont
     Bucket: bucket,
     Key: key,
     ContentType: contentType,
-    ServerSideEncryption: 'AES256',
-    Metadata: {
-      uploadedBy: sellerId,
-      originalName: Buffer.from(originalName).toString('base64'),
-      uploadedAt: new Date().toISOString(),
-    },
   });
 
-  const uploadUrl = await gsu(client, command, { expiresIn: 3600 }); // 1 hour
-  return { key, uploadUrl, expiresIn: 3600 };
+  const uploadUrl = await gsu(client, command, { expiresIn: 3600, signableHeaders: new Set(['host', 'content-type']) });
+  return { key, uploadUrl, expiresIn: 3600, contentType };
 }
