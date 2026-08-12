@@ -369,7 +369,7 @@ export async function getTracks(req, res) {
       tracks.map(async (track) => {
         const { _count, audioUrl, waveformData, ...rest } = track;
         // Prefer watermarked preview (S3 key) over raw WAV
-        const ffmpegKey = (waveformData as any)?.ffmpegPreviewUrl;
+        const ffmpegKey = waveformData?.ffmpegPreviewUrl;
         let previewUrl = null;
         if (ffmpegKey && !ffmpegKey.startsWith('http')) {
           // S3 key for watermarked MP3
