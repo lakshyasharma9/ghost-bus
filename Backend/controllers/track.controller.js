@@ -343,6 +343,7 @@ export async function getTracks(req, res) {
           price:      true,
           audioUrl:   true,
           coverUrl:   true,
+          waveformData: true,
           duration:   true,
           tags:       true,
           isExclusive: true,
@@ -366,11 +367,21 @@ export async function getTracks(req, res) {
     // ── Generate signed cover URLs ──
     const tracksWithUrls = await Promise.all(
       tracks.map(async (track) => {
-        const { _count, audioUrl, ...rest } = track;
+        const { _count, audioUrl, waveformData, ...rest } = track;
+        // Prefer watermarked preview (S3 key) over raw WAV
+        const ffmpegKey = (waveformData as any)?.ffmpegPreviewUrl;
+        let previewUrl = null;
+        if (ffmpegKey && !ffmpegKey.startsWith('http')) {
+          // S3 key for watermarked MP3
+          previewUrl = await getPreviewUrl(ffmpegKey);
+        } else if (audioUrl) {
+          // Fallback: raw WAV (for tracks not yet processed)
+          previewUrl = await getPreviewUrl(audioUrl);
+        }
         return {
           ...rest,
           coverUrl: track.coverUrl ? await getPreviewUrl(track.coverUrl) : null,
-          previewUrl: audioUrl ? await getPreviewUrl(audioUrl) : null,
+          previewUrl,
           price: Number(track.price),
           sold: _count.orderItems > 0,
         };

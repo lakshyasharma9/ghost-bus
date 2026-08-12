@@ -165,44 +165,35 @@ export async function generatePreviewMP3(masteredS3Key, watermarkS3Key, trackId)
 
     let result;
     if (wmFilePath && wm2FilePath) {
-      // Watermarked preview — [out] label required in maps when using filter_complex
-      result = await ffmpegRequest('POST', '/ffmpeg/process', {
-        task: {
-          inputs: [
-            { file_path: masteredUpload.file_path }, // [0] main track
-            { file_path: wmFilePath },               // [1] watermark @ 0s
-            { file_path: wm2FilePath },              // [2] watermark @ 15s
-          ],
-          filter_complex: [
-            '[0:a]atrim=0:30,asetpts=PTS-STARTPTS,volume=0.9[main]',
-            '[1:a]adelay=0|0,volume=0.35[wm0]',
-            '[2:a]adelay=15000|15000,volume=0.35[wm15]',
-            '[main][wm0][wm15]amix=inputs=3:duration=first:normalize=0,afade=t=out:st=27:d=3[out]',
-          ].join(';'),
-          outputs: [{
-            file: outputFile,
-            options: ['-c:a', 'libmp3lame', '-b:a', '320k', '-ac', '2'],
-            maps: ['[out]'],
-          }],
-          output_dir_id: dir_id,
-        },
+      // Full-length watermarked preview
+      // Watermark repeats every 15 seconds throughout the entire track
+      // Uses amix with looped watermark overlaid on the full track
+      // Strategy: create watermark instances at 0s, 15s, 30s, 45s, 60s, 75s, 90s, 105s, 120s, 135s, 150s
+      // Since we only have 2 watermark files uploaded, use the AI endpoint for complex looping
+      result = await ffmpegRequest('POST', '/ai/ffmpeg/process', {
+        inputs: [
+          { file_path: masteredUpload.file_path },
+          { file_path: wmFilePath },
+        ],
+        instructions: `Mix these two audio files together to create a watermarked preview. The first file is the main music track. The second file is a short voice watermark tag. Overlay the watermark voice on top of the music, repeating the watermark every 15 seconds throughout the entire duration of the main track. The watermark volume should be at 35% of the original watermark level so the music is still clearly audible. Keep the full length of the main track. Apply a 3-second fade-out at the very end. Output as MP3 320kbps stereo. Output filename: ${outputFile}`,
+        output_dir_id: dir_id,
       });
     } else {
-      // No watermark — just trim + fade out
+      // No watermark — full length MP3 with fade out
       result = await ffmpegRequest('POST', '/ffmpeg/process', {
         task: {
           inputs: [{ file_path: masteredUpload.file_path }],
           outputs: [{
             file: outputFile,
-            options: ['-t', '30', '-c:a', 'libmp3lame', '-b:a', '320k', '-ac', '2', '-af', 'afade=t=out:st=27:d=3'],
+            options: ['-c:a', 'libmp3lame', '-b:a', '320k', '-ac', '2', '-af', 'afade=t=out:st=27:d=3'],
           }],
           output_dir_id: dir_id,
         },
       });
     }
 
-    const outputEntry = result?.result?.find(r => r.file_name === outputFile);
-    const cdnUrl = outputEntry?.download_url ?? null;
+    const outputEntry = result?.result?.find((r: any) => r.file_name === outputFile || r.file_name?.endsWith('.mp3'));
+    const cdnUrl = outputEntry?.download_url ?? result?.result?.[0]?.download_url ?? null;
 
     if (!cdnUrl) throw new Error('No output URL in FFmpeg response: ' + JSON.stringify(result).substring(0, 200));
 
