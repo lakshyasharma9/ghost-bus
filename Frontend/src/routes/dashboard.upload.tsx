@@ -113,7 +113,8 @@ function UploadPage() {
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
   const [hasDraft, setHasDraft] = useState(!!draft && (draft.step > 0 || draft.meta?.title));
-
+  const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
+  const [uploadStatus, setUploadStatus] = useState<string>("");
   const qc = useQueryClient();
   const tier = getSellerTier(SELLER_LIFETIME_SALES);
   const lyricsRequired = VOCAL_TYPES_REQUIRING_LYRICS.includes(meta.vocalType);
@@ -185,6 +186,8 @@ function UploadPage() {
     // Step 5 = final submit — upload files directly to S3, then finalize
     if (step === 5) {
       setVerifying(true);
+      setUploadProgress({});
+      setUploadStatus("Preparing upload...");
       try {
         // ── Required files check ──
         if (!files.mastered || !files.unmastered || !files.stems || !files.artwork) {
@@ -213,25 +216,54 @@ function UploadPage() {
         addFile('extendedMix', files.extendedMix);
         addFile('instrumental', files.instrumental);
 
-        toast.info("Requesting upload slots...");
+        setUploadStatus("Getting upload URLs...");
 
         const initRes = await apiClient.post("/tracks/init-upload", { files: fileList });
         const { uploadUrls } = initRes.data.data;
 
-        // ── Step 2: Upload all files directly to S3 in parallel ──
-        toast.info("Uploading files to cloud storage...");
+        // ── Step 2: Upload all files directly to S3 in parallel with progress ──
+        setUploadStatus("Uploading files...");
 
-        const uploadPromises = fileEntries.map(async ({ field, file }) => {
-          const { uploadUrl, contentType } = uploadUrls[field];
-          const res = await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': contentType || file.type || 'application/octet-stream',
-            },
-            body: file,
+        // Initialize progress for all files
+        const initProgress: Record<string, number> = {};
+        fileEntries.forEach(({ field }) => { initProgress[field] = 0; });
+        setUploadProgress(initProgress);
+
+        const uploadFileWithProgress = (field: string, file: File, uploadUrl: string, contentType: string): Promise<void> => {
+          return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('PUT', uploadUrl);
+            xhr.setRequestHeader('Content-Type', contentType);
+
+            xhr.upload.onprogress = (e) => {
+              if (e.lengthComputable) {
+                const pct = Math.round((e.loaded / e.total) * 100);
+                setUploadProgress(prev => ({ ...prev, [field]: pct }));
+              }
+            };
+
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                setUploadProgress(prev => ({ ...prev, [field]: 100 }));
+                resolve();
+              } else {
+                reject(new Error(`Failed to upload ${field}: HTTP ${xhr.status}`));
+              }
+            };
+
+            xhr.onerror = () => reject(new Error(`Network error uploading ${field}`));
+            xhr.ontimeout = () => reject(new Error(`Timeout uploading ${field}`));
+            xhr.timeout = 600000; // 10 min per file
+
+            xhr.send(file);
           });
-          if (!res.ok) throw new Error(`Failed to upload ${field}: HTTP ${res.status}`);
-          return { field, key: uploadUrls[field].key };
+        };
+
+        const uploadPromises = fileEntries.map(({ field, file }) => {
+          const { uploadUrl, contentType } = uploadUrls[field];
+          return uploadFileWithProgress(field, file, uploadUrl, contentType).then(() => ({
+            field, key: uploadUrls[field].key,
+          }));
         });
 
         const uploadResults = await Promise.all(uploadPromises);
@@ -247,7 +279,7 @@ function UploadPage() {
         }
 
         // ── Step 3: Finalize — send metadata + S3 keys to backend ──
-        toast.info("Finalizing submission...");
+        setUploadStatus("Finalizing submission...");
 
         const { data } = await apiClient.post("/tracks/finalize-upload", {
           title:        meta.title.trim(),
@@ -268,11 +300,15 @@ function UploadPage() {
 
         setVerifying(false);
         setVerified(true);
+        setUploadProgress({});
+        setUploadStatus("");
         clearDraft();
         setHasDraft(false);
         toast.success("Track submitted for A&R review!");
       } catch (err: any) {
         setVerifying(false);
+        setUploadProgress({});
+        setUploadStatus("");
         const msg = err?.response?.data?.message ?? err?.message ?? "Upload failed. Please try again.";
         toast.error(msg);
       }
@@ -366,7 +402,7 @@ function UploadPage() {
           {step === 2 && <StepTransparency value={transparency} onChange={setTransparency} />}
           {step === 3 && <StepPricing price={price} setPrice={setPrice} tier={tier} />}
           {step === 4 && <StepAgreement price={price} accepted={agreementAccepted} setAccepted={setAgreementAccepted} />}
-          {step === 5 && <StepVerification verifying={verifying} verified={verified} meta={meta} />}
+          {step === 5 && <StepVerification verifying={verifying} verified={verified} meta={meta} uploadProgress={uploadProgress} uploadStatus={uploadStatus} />}
         </motion.div>
       </AnimatePresence>
 
@@ -1074,10 +1110,12 @@ function StepAgreement({ price, accepted, setAccepted }: {
 
 // ── Step 6: Verification ──────────────────────────────────────────────────────
 
-function StepVerification({ verifying, verified, meta }: {
+function StepVerification({ verifying, verified, meta, uploadProgress, uploadStatus }: {
   verifying: boolean;
   verified: boolean;
   meta: any;
+  uploadProgress: Record<string, number>;
+  uploadStatus: string;
 }) {
   const checks = [
     "ZIP file structure validation",
@@ -1086,6 +1124,12 @@ function StepVerification({ verifying, verified, meta }: {
     "Uniqueness scan via MRT API (ACRCloud)",
     "Metadata completeness check",
   ];
+
+  // Calculate overall progress
+  const progressEntries = Object.entries(uploadProgress);
+  const overallProgress = progressEntries.length > 0
+    ? Math.round(progressEntries.reduce((sum, [, pct]) => sum + pct, 0) / progressEntries.length)
+    : 0;
 
   if (verified) {
     return (
@@ -1122,6 +1166,39 @@ function StepVerification({ verifying, verified, meta }: {
       <p className="text-sm text-muted-foreground">
         Automated checks run before submission. After passing, your track enters the A&R review queue.
       </p>
+
+      {/* Upload progress bar — shown during upload */}
+      {verifying && progressEntries.length > 0 && (
+        <div className="space-y-3 p-4 rounded-xl bg-card border border-border">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-medium">{uploadStatus || "Uploading..."}</span>
+            <span className="text-primary font-bold">{overallProgress}%</span>
+          </div>
+          {/* Overall progress bar */}
+          <div className="w-full h-2.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary rounded-full transition-all duration-300"
+              style={{ width: `${overallProgress}%` }}
+            />
+          </div>
+          {/* Per-file progress */}
+          <div className="space-y-2 mt-3">
+            {progressEntries.map(([field, pct]) => (
+              <div key={field} className="flex items-center gap-3 text-xs">
+                <span className="w-24 truncate text-muted-foreground capitalize">{field}</span>
+                <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary/70 rounded-full transition-all duration-200"
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <span className="w-10 text-right text-muted-foreground">{pct}%</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-3">
         {checks.map((c, i) => (
           <div key={c} className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border">
