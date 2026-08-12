@@ -138,12 +138,25 @@ export async function uploadBufferToS3(buffer, key, contentType) {
 export async function uploadToS3(file, folder, sellerId) {
   const key = buildKey(folder, sellerId, file.originalname);
 
+  // Support both memoryStorage (buffer) and diskStorage (path)
+  let body;
+  let size = file.size;
+  if (file.buffer) {
+    body = file.buffer;
+  } else if (file.path) {
+    const { createReadStream, statSync } = await import('fs');
+    body = createReadStream(file.path);
+    size = file.size || statSync(file.path).size;
+  } else {
+    throw new Error('File has no buffer or path');
+  }
+
   const command = new PutObjectCommand({
     Bucket: getBucket(),
     Key: key,
-    Body: file.buffer,
+    Body: body,
     ContentType: file.mimetype,
-    ContentLength: file.size,
+    ContentLength: size,
     // Server-side encryption
     ServerSideEncryption: 'AES256',
     // Metadata for auditing
@@ -155,6 +168,13 @@ export async function uploadToS3(file, folder, sellerId) {
   });
 
   await getS3().send(command);
+
+  // Clean up temp file if stored on disk
+  if (file.path) {
+    const { unlink } = await import('fs/promises');
+    unlink(file.path).catch(() => {});
+  }
+
   return key;
 }
 

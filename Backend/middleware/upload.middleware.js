@@ -1,8 +1,20 @@
 import multer from 'multer';
+import os from 'os';
+import path from 'path';
 import { errorResponse } from '../utils/response.js';
 
-// ─── Store files in memory (we stream directly to S3) ────────────────────────
-const storage = multer.memoryStorage();
+// ─── Store files on disk (prevents OOM on large uploads) ─────────────────────
+// Files are written to OS temp dir, then streamed to S3, then auto-deleted
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, os.tmpdir());
+  },
+  filename: (req, file, cb) => {
+    const unique = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const ext = path.extname(file.originalname) || '';
+    cb(null, `ghostbus-${unique}${ext}`);
+  },
+});
 
 /**
  * Generic multer instance — used as base
