@@ -192,7 +192,7 @@ export async function generatePreviewMP3(masteredS3Key, watermarkS3Key, trackId)
       });
     }
 
-    const outputEntry = result?.result?.find((r: any) => r.file_name === outputFile || r.file_name?.endsWith('.mp3'));
+    const outputEntry = result?.result?.find(r => r.file_name === outputFile || r.file_name?.endsWith('.mp3'));
     const cdnUrl = outputEntry?.download_url ?? result?.result?.[0]?.download_url ?? null;
 
     if (!cdnUrl) throw new Error('No output URL in FFmpeg response: ' + JSON.stringify(result).substring(0, 200));
