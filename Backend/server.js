@@ -97,8 +97,8 @@ import supportRoutes from './routes/support.routes.js';
 import adminRoutes from './routes/admin.routes.js';
 import blogRoutes from './routes/blog.routes.js';
 import recentlySoldRoutes from './routes/recently-sold.routes.js';
-// import orderRoutes from './routes/order.routes.js';
-// import paymentRoutes from './routes/payment.routes.js';
+import orderRoutes from './routes/order.routes.js';
+import paymentRoutes from './routes/payment.routes.js';
 
 // Use routes
 app.use('/api/v1/auth', authRoutes);
@@ -109,8 +109,8 @@ app.use('/api/v1/support', supportRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/blog', blogRoutes);
 app.use('/api/v1/recently-sold', recentlySoldRoutes);
-// app.use('/api/v1/orders', orderRoutes);
-// app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/orders', orderRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 // ============================================
 // ERROR HANDLING

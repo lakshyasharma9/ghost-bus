@@ -90,6 +90,7 @@ model Track {
   duration        Int?
   fileSize        BigInt?     @map("file_size")
   status          TrackStatus @default(PENDING)
+  isSold          Boolean     @default(false) @map("is_sold")
   rejectionReason String?     @map("rejection_reason")
   tags            String[]
   isExclusive     Boolean     @default(true) @map("is_exclusive")
@@ -112,6 +113,11 @@ model Order {
   totalAmount           Decimal     @db.Decimal(10, 2) @map("total_amount")
   status                OrderStatus @default(PENDING)
   stripePaymentIntentId String?     @unique @map("stripe_payment_intent_id")
+  paypalOrderId         String?     @unique @map("paypal_order_id")
+  paypalCaptureId       String?     @unique @map("paypal_capture_id")
+  paymentMethod         String?     @map("payment_method")
+  buyerEmail            String?     @map("buyer_email")
+  buyerPhone            String?     @map("buyer_phone")
   createdAt             DateTime    @default(now()) @map("created_at")
 
   // Relations

@@ -125,8 +125,17 @@ export const wishlistAPI = {
 // Order APIs
 export const orderAPI = {
   getAll: () => apiClient.get('/orders'),
-  getById: (id) => apiClient.get(`/orders/${id}`),
-  create: (data) => apiClient.post('/orders', data),
+  getById: (id: string) => apiClient.get(`/orders/${id}`),
+  getDownloadUrl: (orderId: string, itemId: string) =>
+    apiClient.get(`/orders/${orderId}/items/${itemId}/download`),
+};
+
+// Payment APIs
+export const paymentAPI = {
+  createPayPalOrder: (data: { items: { trackId: string }[]; buyerPhone: string; countryCode: string }) =>
+    apiClient.post('/payments/paypal/create-order', data),
+  capturePayPalOrder: (paypalOrderId: string) =>
+    apiClient.post('/payments/paypal/capture-order', { paypalOrderId }),
 };
 
 // Support APIs
