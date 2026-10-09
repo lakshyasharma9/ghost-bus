@@ -37,3 +37,16 @@ export const signedUrlRateLimit = rateLimit({
   legacyHeaders: false,
   keyGenerator: (req) => req.user?.id || req.ip,
 });
+
+/**
+ * Rate limiter for payment endpoints
+ * Max 10 payment attempts per 15 min per user — prevents abuse/fraud
+ */
+export const paymentRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: 'Too many payment attempts. Please wait 15 minutes.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.id || req.ip,
+});
