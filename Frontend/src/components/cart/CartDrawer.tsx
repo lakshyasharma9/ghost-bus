@@ -242,11 +242,15 @@ export function CartDrawer() {
                         </label>
                       </div>
 
-                      {/* PayPal Buttons — shown when phone valid + T&C accepted */}
+                      {/* PayPal + Card Buttons */}
                       {canShowPayPal && (
-                        <div className="pt-1">
+                        <div className="pt-1 space-y-2">
+                          <p className="text-xs text-center text-muted-foreground font-medium">Choose payment method</p>
                           {paypalLoading ? (
-                            <div className="h-12 rounded-xl bg-muted animate-pulse" />
+                            <div className="space-y-2">
+                              <div className="h-12 rounded-xl bg-muted animate-pulse" />
+                              <div className="h-12 rounded-xl bg-muted animate-pulse" />
+                            </div>
                           ) : (
                             <PayPalButtons
                               style={{
@@ -258,11 +262,12 @@ export function CartDrawer() {
                               }}
                               disabled={processing}
                               forceReRender={[total, phone, countryCode]}
+                              fundingSource={undefined}
                               createOrder={createPayPalOrder}
                               onApprove={onApprove}
                               onError={(err) => {
                                 console.error("[PayPal] error:", err);
-                                toast.error("PayPal error. Please try again.");
+                                toast.error("Payment error. Please try again.");
                               }}
                               onCancel={() => {
                                 toast.info("Payment cancelled.");

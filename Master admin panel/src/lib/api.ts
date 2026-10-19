@@ -378,7 +378,13 @@ export interface KycRow {
 }
 export interface OrderRow {
   id: string; totalAmount: number; status: string;
-  stripePaymentIntentId: string | null; createdAt: string;
+  stripePaymentIntentId: string | null;
+  paypalOrderId: string | null;
+  paypalCaptureId: string | null;
+  paymentMethod: string | null;
+  buyerEmail: string | null;
+  buyerPhone: string | null;
+  createdAt: string;
   buyer: { id: string; fullName: string | null; email: string };
   items: { id: string; price: number; track: { id: string; title: string } }[];
 }

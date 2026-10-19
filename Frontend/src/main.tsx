@@ -27,7 +27,7 @@ if (!rootElement.innerHTML) {
         currency: 'EUR',
         intent: 'capture',
         components: 'buttons',
-        disableFunding: 'credit,card',
+        enableFunding: 'card',
       }}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
