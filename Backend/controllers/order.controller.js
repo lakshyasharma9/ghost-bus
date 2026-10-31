@@ -126,6 +126,7 @@ export async function getDownloadUrl(req, res) {
             id:           true,
             title:        true,
             audioUrl:     true,
+            coverUrl:     true,
             waveformData: true,
           },
         },
@@ -166,10 +167,9 @@ export async function getDownloadUrl(req, res) {
       downloads.lyrics = await getSignedDownloadUrl(waveformData.lyricsKey, 3600);
     }
 
-    // Artwork
-    if (waveformData.artworkKey || item.track.coverUrl) {
-      const artKey = waveformData.artworkKey || item.track.audioUrl?.replace('/audio/', '/artwork/');
-      if (artKey) downloads.artwork = await getSignedDownloadUrl(artKey, 3600);
+    // Artwork — coverUrl is the actual S3 key for the artwork
+    if (item.track.coverUrl) {
+      downloads.artwork = await getSignedDownloadUrl(item.track.coverUrl, 3600);
     }
 
     return successResponse(res, 200, 'Download URLs generated', {

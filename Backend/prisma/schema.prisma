@@ -47,6 +47,7 @@ model User {
   bannerUrl               String?   @map("banner_url")
   bio                     String?
   isVerified              Boolean   @default(false) @map("is_verified")
+  isSuspended             Boolean   @default(false) @map("is_suspended")
   sellerModeEnabled       Boolean   @default(false) @map("seller_mode_enabled")
   sellerVerified          Boolean   @default(false) @map("seller_verified")
   sellerApplicationStatus String?   @map("seller_application_status")

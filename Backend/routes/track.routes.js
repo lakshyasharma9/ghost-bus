@@ -1,7 +1,7 @@
 import express from 'express';
 import { body, query, param } from 'express-validator';
 import { validate } from '../utils/response.js';
-import { authenticate, requireSellerMode } from '../middleware/auth.middleware.js';
+import { authenticate, requireSellerMode, authorize } from '../middleware/auth.middleware.js';
 import { trackUploadFields, handleUploadError } from '../middleware/upload.middleware.js';
 import { uploadRateLimit, marketplaceRateLimit, signedUrlRateLimit } from '../middleware/rateLimit.middleware.js';
 import {
@@ -215,6 +215,7 @@ router.get(
 router.get(
   '/:id/mrt-status',
   authenticate,
+  authorize('ADMIN'),
   [param('id').isUUID().withMessage('Invalid track ID'), validate],
   getTrackMRTStatus
 );
@@ -226,6 +227,7 @@ router.get(
 router.post(
   '/:id/mrt-rescan',
   authenticate,
+  authorize('ADMIN'),
   [param('id').isUUID().withMessage('Invalid track ID'), validate],
   retriggerMRTScan
 );

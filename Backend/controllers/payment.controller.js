@@ -15,6 +15,34 @@ function getPayPalBase() {
     : 'https://api-m.sandbox.paypal.com';
 }
 
+// ─── Refund a PayPal capture (used by admin refund flow) ─────────────────────
+
+/**
+ * Issues a PayPal refund for a capture ID.
+ * Returns { ok: boolean, refundId?: string, error?: string }
+ */
+export async function refundPayPalCapture(captureId) {
+  if (!captureId) return { ok: false, error: 'No capture ID' };
+  try {
+    const accessToken = await getPayPalAccessToken();
+    const res = await fetch(`${getPayPalBase()}/v2/payments/captures/${captureId}/refund`, {
+      method:  'POST',
+      headers: {
+        Authorization:  `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}), // full refund
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, error: data?.message || `HTTP ${res.status}` };
+    }
+    return { ok: true, refundId: data.id, status: data.status };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
 // ─── Get PayPal OAuth2 access token ──────────────────────────────────────────
 
 async function getPayPalAccessToken() {
@@ -67,11 +95,16 @@ export async function createPayPalOrder(req, res) {
     }
 
     // ── Re-fetch prices from DB — never trust client-sent prices ──
+    // Availability = APPROVED + not sold + no COMPLETED order item for it
     const tracks = await prisma.track.findMany({
       where: {
         id:     { in: trackIds },
         status: 'APPROVED',
         isSold: false,
+        // Exclude tracks that already have a COMPLETED order (defensive — isSold should cover it)
+        orderItems: {
+          none: { order: { status: 'COMPLETED' } },
+        },
       },
       select: { id: true, title: true, price: true },
     });
@@ -227,20 +260,31 @@ export async function capturePayPalOrder(req, res) {
     }
 
     const captureId = captureData.purchase_units?.[0]?.payments?.captures?.[0]?.id;
+    const trackIds  = dbOrder.items.map((item) => item.trackId);
 
-    // ── Atomic DB update: complete order + mark tracks sold ──
-    await prisma.$transaction([
-      prisma.order.update({
+    // ── Atomic DB update inside an interactive transaction ──
+    // Re-verify no OTHER completed order already claimed these tracks (race safety).
+    await prisma.$transaction(async (tx) => {
+      // Lock-check: is any track already sold by a DIFFERENT completed order?
+      const conflicting = await tx.track.findMany({
+        where: { id: { in: trackIds }, isSold: true },
+        select: { id: true },
+      });
+      if (conflicting.length > 0) {
+        // Another buyer already purchased — abort (money will be refunded by caller flow)
+        throw new Error('TRACK_ALREADY_SOLD');
+      }
+
+      await tx.order.update({
         where: { id: dbOrder.id },
         data:  { status: 'COMPLETED', paypalCaptureId: captureId ?? null },
-      }),
-      ...dbOrder.items.map((item) =>
-        prisma.track.update({
-          where: { id: item.trackId },
-          data:  { isSold: true },
-        })
-      ),
-    ]);
+      });
+
+      await tx.track.updateMany({
+        where: { id: { in: trackIds } },
+        data:  { isSold: true },
+      });
+    });
 
     console.log(`[PayPal] Capture success: ${captureId} | Order: ${dbOrder.id}`);
 
@@ -250,6 +294,19 @@ export async function capturePayPalOrder(req, res) {
       status:    'COMPLETED',
     });
   } catch (err) {
+    // Race condition: payment captured but another buyer got the track first
+    if (err.message === 'TRACK_ALREADY_SOLD') {
+      console.error('[PayPal] Race — track already sold after capture. Order needs refund.');
+      // Mark order FAILED so admin sees it and can issue a refund
+      try {
+        const { paypalOrderId } = req.body;
+        await prisma.order.update({
+          where: { paypalOrderId },
+          data:  { status: 'FAILED' },
+        });
+      } catch (_) {}
+      return errorResponse(res, 409, 'This track was just purchased by someone else. Your payment will be refunded within 24 hours — please contact support.');
+    }
     console.error('[PayPal] capturePayPalOrder error:', err.message);
     return errorResponse(res, 500, 'Payment processing error. Please contact support.');
   }

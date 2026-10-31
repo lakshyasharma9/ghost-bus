@@ -19,6 +19,19 @@ function Auth() {
   const navigate = useNavigate();
   const { refreshProfile } = useAuthContext();
 
+  // Read ?redirect= from the URL so users return to where they came from
+  const getRedirectTarget = () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+      // Only allow internal paths (prevent open-redirect)
+      if (redirect && redirect.startsWith("/") && !redirect.startsWith("//")) {
+        return redirect;
+      }
+    } catch { /* ignore */ }
+    return "/";
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (busy) return;
@@ -52,7 +65,7 @@ function Auth() {
         await refreshProfile();
         
         toast.success("Account created! Welcome to GhostBus.");
-        navigate({ to: "/" });
+        navigate({ to: getRedirectTarget() });
       } else {
         const { data } = await authAPI.login({
           email,
@@ -67,7 +80,7 @@ function Auth() {
         await refreshProfile();
         
         toast.success("Welcome back!");
-        navigate({ to: "/" });
+        navigate({ to: getRedirectTarget() });
       }
     } catch (err: any) {
       console.error('Auth error:', err);

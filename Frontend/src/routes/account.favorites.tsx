@@ -13,8 +13,10 @@ function Favorites() {
   const wl = useWishlist();
   const ids = wl.ids as string[];
 
-  // Filter to real API IDs only (UUID format) — skip mock "trk_X" IDs
-  const realIds = ids.filter((id) => /^[0-9a-f-]{36}$/.test(id));
+  // Filter to real API IDs only (proper UUID v4 format) — skip mock "trk_X" IDs
+  const realIds = ids.filter((id) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+  );
 
   // Fetch each track individually in parallel
   const trackQueries = useQueries({

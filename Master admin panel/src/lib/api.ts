@@ -312,7 +312,7 @@ export interface RevenueDay { day: string; revenue: number; commission: number; 
 
 export interface AdminUserRow {
   id: string; email: string; fullName: string | null; username: string | null;
-  role: string; isVerified: boolean; kycStatus: string;
+  role: string; isVerified: boolean; isSuspended: boolean; kycStatus: string;
   sellerApplicationStatus: string | null; sellerVerified: boolean; createdAt: string;
 }
 export interface SellerRow {

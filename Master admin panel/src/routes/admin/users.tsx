@@ -63,14 +63,16 @@ function UsersPage() {
               )},
               { key: "email", header: "Email", render: (u: AdminUserRow) => <span className="text-sm">{u.email}</span> },
               { key: "role", header: "Role", render: (u: AdminUserRow) => <StatusBadge status={u.role === "SELLER" ? "approved" : "active"} /> },
-              { key: "status", header: "Status", render: (u: AdminUserRow) => <StatusBadge status={u.isVerified ? "active" : "suspended"} /> },
+              { key: "status", header: "Status", render: (u: AdminUserRow) => <StatusBadge status={u.isSuspended ? "suspended" : "active"} /> },
               { key: "kyc", header: "KYC", render: (u: AdminUserRow) => <StatusBadge status={u.kycStatus?.toLowerCase()} /> },
               { key: "joined", header: "Joined", render: (u: AdminUserRow) => <span className="text-xs">{fmtDate(u.createdAt)}</span> },
               { key: "actions", header: "", render: (u: AdminUserRow) => (
                 <div className="flex justify-end gap-1">
-                  {u.isVerified
-                    ? <Button size="sm" variant="secondary" onClick={() => suspend.mutate(u.id)} disabled={suspend.isPending}>Suspend</Button>
-                    : <Button size="sm" variant="success" onClick={() => restore.mutate(u.id)} disabled={restore.isPending}>Restore</Button>}
+                  {u.role === "ADMIN"
+                    ? <span className="text-xs text-muted-foreground">—</span>
+                    : u.isSuspended
+                      ? <Button size="sm" variant="success" onClick={() => restore.mutate(u.id)} disabled={restore.isPending}>Restore</Button>
+                      : <Button size="sm" variant="secondary" onClick={() => suspend.mutate(u.id)} disabled={suspend.isPending}>Suspend</Button>}
                 </div>
               ), className: "text-right" },
             ]}

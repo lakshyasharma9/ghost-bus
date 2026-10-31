@@ -8,6 +8,27 @@ import dotenv from 'dotenv';
 // Load environment variables — .env.local overrides .env
 dotenv.config({ path: '.env.local', override: true });
 
+// ── Production safety: refuse to start with missing/default secrets ──
+const DEFAULT_SECRETS = ['your-super-secret-jwt-key', 'your-super-secret-refresh-key'];
+if (process.env.NODE_ENV === 'production') {
+  const problems = [];
+  if (!process.env.JWT_SECRET || DEFAULT_SECRETS.includes(process.env.JWT_SECRET)) {
+    problems.push('JWT_SECRET is missing or using an insecure default');
+  }
+  if (!process.env.JWT_REFRESH_SECRET || DEFAULT_SECRETS.includes(process.env.JWT_REFRESH_SECRET)) {
+    problems.push('JWT_REFRESH_SECRET is missing or using an insecure default');
+  }
+  if (!process.env.DATABASE_URL) {
+    problems.push('DATABASE_URL is missing');
+  }
+  if (problems.length > 0) {
+    console.error('\n❌ FATAL: Cannot start in production with insecure configuration:');
+    problems.forEach((p) => console.error(`   - ${p}`));
+    console.error('Set these in your environment and restart.\n');
+    process.exit(1);
+  }
+}
+
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -143,7 +164,7 @@ app.use((err, req, res, next) => {
 // START SERVER
 // ============================================
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`
     🚀 GhostBus Backend Server Started!
     
@@ -168,7 +189,10 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   console.log('SIGINT signal received: closing HTTP server');
-  process.exit(0);
+  server.close(() => {
+    console.log('HTTP server closed');
+    process.exit(0);
+  });
 });
 
 export default app;

@@ -32,11 +32,17 @@ export async function authenticate(req, res, next) {
         sellerModeEnabled: true,
         sellerVerified: true,
         isVerified: true,
+        isSuspended: true,
       },
     });
 
     if (!user) {
       return errorResponse(res, 401, 'User not found');
+    }
+
+    // Block suspended accounts
+    if (user.isSuspended) {
+      return errorResponse(res, 403, 'Your account has been suspended. Please contact support.');
     }
 
     // Attach user to request

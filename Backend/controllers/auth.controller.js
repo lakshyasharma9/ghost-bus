@@ -77,6 +77,11 @@ export async function login(req, res) {
       return errorResponse(res, 401, 'Invalid email or password');
     }
 
+    // Block suspended accounts from logging in
+    if (user.isSuspended) {
+      return errorResponse(res, 403, 'Your account has been suspended. Please contact support.');
+    }
+
     // Generate tokens
     const tokens = generateTokens(user);
 

@@ -1,6 +1,7 @@
 import prisma from '../config/database.js';
 import { errorResponse, successResponse } from '../utils/response.js';
 import { getPreviewUrl } from '../utils/s3.js';
+import { refundPayPalCapture } from './payment.controller.js';
 
 // ─── Dashboard Stats ──────────────────────────────────────────────────────────
 export async function getDashboardStats(req, res) {
@@ -92,8 +93,8 @@ export async function getUsers(req, res) {
 
     const where = {};
     if (role) where.role = role.toUpperCase();
-    if (status === 'suspended') where.isVerified = false;
-    if (status === 'active') where.isVerified = true;
+    if (status === 'suspended') where.isSuspended = true;
+    if (status === 'active') where.isSuspended = false;
     if (search?.trim()) {
       where.OR = [
         { fullName: { contains: search, mode: 'insensitive' } },
@@ -107,7 +108,7 @@ export async function getUsers(req, res) {
         where, skip, take: limitNum, orderBy: { createdAt: 'desc' },
         select: {
           id: true, email: true, fullName: true, username: true,
-          role: true, isVerified: true, kycStatus: true, avatarUrl: true,
+          role: true, isVerified: true, isSuspended: true, kycStatus: true, avatarUrl: true,
           sellerApplicationStatus: true, sellerVerified: true, createdAt: true,
         },
       }),
@@ -126,9 +127,14 @@ export async function getUsers(req, res) {
 export async function suspendUser(req, res) {
   try {
     const { id } = req.params;
+    // Prevent an admin from suspending another admin or themselves
+    const target = await prisma.user.findUnique({ where: { id }, select: { role: true } });
+    if (!target) return errorResponse(res, 404, 'User not found');
+    if (target.role === 'ADMIN') return errorResponse(res, 403, 'Cannot suspend an admin account');
+
     const user = await prisma.user.update({
-      where: { id }, data: { isVerified: false },
-      select: { id: true, email: true, isVerified: true },
+      where: { id }, data: { isSuspended: true },
+      select: { id: true, email: true, isSuspended: true },
     });
     return successResponse(res, 200, 'User suspended', { user });
   } catch (err) {
@@ -141,8 +147,8 @@ export async function restoreUser(req, res) {
   try {
     const { id } = req.params;
     const user = await prisma.user.update({
-      where: { id }, data: { isVerified: true },
-      select: { id: true, email: true, isVerified: true },
+      where: { id }, data: { isSuspended: false },
+      select: { id: true, email: true, isSuspended: true },
     });
     return successResponse(res, 200, 'User restored', { user });
   } catch (err) {
@@ -460,11 +466,43 @@ export async function getOrders(req, res) {
 export async function refundOrder(req, res) {
   try {
     const { id } = req.params;
-    const order = await prisma.order.update({
-      where: { id }, data: { status: 'REFUNDED' },
-      select: { id: true, status: true },
+
+    const order = await prisma.order.findUnique({
+      where: { id },
+      select: {
+        id: true, status: true, paypalCaptureId: true, paymentMethod: true,
+        items: { select: { trackId: true } },
+      },
     });
-    return successResponse(res, 200, 'Order refunded', { order });
+
+    if (!order) return errorResponse(res, 404, 'Order not found');
+    if (order.status === 'REFUNDED') return errorResponse(res, 409, 'Order already refunded');
+    if (order.status !== 'COMPLETED' && order.status !== 'FAILED') {
+      return errorResponse(res, 409, `Cannot refund an order with status ${order.status}`);
+    }
+
+    // Attempt actual PayPal money refund if we have a capture ID
+    let paypalRefund = { ok: true, skipped: true };
+    if (order.paymentMethod === 'PAYPAL' && order.paypalCaptureId) {
+      paypalRefund = await refundPayPalCapture(order.paypalCaptureId);
+      if (!paypalRefund.ok) {
+        // Don't flip DB state if money refund failed — admin must retry
+        return errorResponse(res, 502, `PayPal refund failed: ${paypalRefund.error}. Order NOT marked refunded.`);
+      }
+    }
+
+    // Atomic: mark order refunded + release tracks back to marketplace
+    const trackIds = order.items.map((i) => i.trackId);
+    await prisma.$transaction([
+      prisma.order.update({ where: { id }, data: { status: 'REFUNDED' } }),
+      prisma.track.updateMany({ where: { id: { in: trackIds } }, data: { isSold: false } }),
+    ]);
+
+    return successResponse(res, 200, 'Order refunded and tracks re-listed', {
+      order: { id: order.id, status: 'REFUNDED' },
+      paypalRefund: paypalRefund.skipped ? null : { refundId: paypalRefund.refundId, status: paypalRefund.status },
+      releasedTracks: trackIds.length,
+    });
   } catch (err) {
     console.error('refundOrder:', err);
     return errorResponse(res, 500, 'Failed to refund order');
