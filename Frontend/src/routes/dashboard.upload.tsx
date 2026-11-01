@@ -26,7 +26,7 @@ const KEYS = [
 // 28 / 72 split — matches backend PLATFORM_FEE_PCT
 export const PLATFORM_FEE_PCT = 0.28;
 export const SELLER_PAYOUT_PCT = 0.72;
-export const MIN_PRICE = 149;
+export const MIN_PRICE = 1;
 export const MAX_PRICE = 2000;
 
 type VocalType = "none" | "exclusive" | "ai";

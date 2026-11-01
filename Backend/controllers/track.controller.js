@@ -68,7 +68,7 @@ function extractKey(urlOrKey) {
 
 const PLATFORM_FEE_PCT = 0.28; // 28% platform fee
 const SELLER_PAYOUT_PCT = 0.72; // 72% seller payout
-const MIN_PRICE = 149;
+const MIN_PRICE = 1;
 const MAX_PRICE = 2000;
 
 // Vocal types that require a lyrics PDF
@@ -643,8 +643,8 @@ export async function updateTrack(req, res) {
     if (bpmInt !== undefined && (bpmInt < 60 || bpmInt > 220)) {
       return errorResponse(res, 400, 'BPM must be between 60 and 220');
     }
-    if (priceFloat !== undefined && (priceFloat < 149 || priceFloat > 2000)) {
-      return errorResponse(res, 400, 'Price must be between €149 and €2000');
+    if (priceFloat !== undefined && (priceFloat < MIN_PRICE || priceFloat > MAX_PRICE)) {
+      return errorResponse(res, 400, `Price must be between €${MIN_PRICE} and €${MAX_PRICE}`);
     }
 
     const updated = await prisma.track.update({
