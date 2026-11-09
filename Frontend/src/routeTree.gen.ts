@@ -26,6 +26,7 @@ import { Route as FaqRouteImport } from './routes/faq'
 import { Route as DmcaRouteImport } from './routes/dmca'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as ApplySellerRouteImport } from './routes/apply-seller'
 import { Route as AccountRouteImport } from './routes/account'
 import { Route as IndexRouteImport } from './routes/index'
@@ -132,6 +133,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const ContactRoute = ContactRouteImport.update({
   id: '/contact',
   path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApplySellerRoute = ApplySellerRouteImport.update({
@@ -249,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/account': typeof AccountRouteWithChildren
   '/apply-seller': typeof ApplySellerRoute
+  '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dmca': typeof DmcaRoute
@@ -289,6 +296,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/apply-seller': typeof ApplySellerRoute
+  '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/dmca': typeof DmcaRoute
   '/faq': typeof FaqRoute
@@ -330,6 +338,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/account': typeof AccountRouteWithChildren
   '/apply-seller': typeof ApplySellerRoute
+  '/checkout': typeof CheckoutRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRouteWithChildren
   '/dmca': typeof DmcaRoute
@@ -373,6 +382,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/apply-seller'
+    | '/checkout'
     | '/contact'
     | '/dashboard'
     | '/dmca'
@@ -413,6 +423,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/apply-seller'
+    | '/checkout'
     | '/contact'
     | '/dmca'
     | '/faq'
@@ -453,6 +464,7 @@ export interface FileRouteTypes {
     | '/'
     | '/account'
     | '/apply-seller'
+    | '/checkout'
     | '/contact'
     | '/dashboard'
     | '/dmca'
@@ -495,6 +507,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AccountRoute: typeof AccountRouteWithChildren
   ApplySellerRoute: typeof ApplySellerRoute
+  CheckoutRoute: typeof CheckoutRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRouteWithChildren
   DmcaRoute: typeof DmcaRoute
@@ -637,6 +650,13 @@ declare module '@tanstack/react-router' {
       path: '/contact'
       fullPath: '/contact'
       preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/apply-seller': {
@@ -858,6 +878,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AccountRoute: AccountRouteWithChildren,
   ApplySellerRoute: ApplySellerRoute,
+  CheckoutRoute: CheckoutRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRouteWithChildren,
   DmcaRoute: DmcaRoute,
