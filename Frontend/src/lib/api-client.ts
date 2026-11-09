@@ -132,10 +132,17 @@ export const orderAPI = {
 
 // Payment APIs
 export const paymentAPI = {
+  // PayPal (International)
   createPayPalOrder: (data: { items: { trackId: string }[]; buyerPhone: string; countryCode: string }) =>
     apiClient.post('/payments/paypal/create-order', data),
   capturePayPalOrder: (paypalOrderId: string) =>
     apiClient.post('/payments/paypal/capture-order', { paypalOrderId }),
+
+  // Cashfree (India)
+  createCashfreeOrder: (data: { items: { trackId: string }[]; buyerPhone: string; buyerName?: string }) =>
+    apiClient.post('/payments/cashfree/create-order', data),
+  verifyCashfreePayment: (cashfreeOrderId: string) =>
+    apiClient.post('/payments/cashfree/verify', { cashfreeOrderId }),
 };
 
 // Support APIs

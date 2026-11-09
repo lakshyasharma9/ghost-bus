@@ -481,13 +481,23 @@ export async function refundOrder(req, res) {
       return errorResponse(res, 409, `Cannot refund an order with status ${order.status}`);
     }
 
-    // Attempt actual PayPal money refund if we have a capture ID
-    let paypalRefund = { ok: true, skipped: true };
+    // Attempt actual money refund based on payment method
+    let gatewayRefund = { ok: true, skipped: true };
+
     if (order.paymentMethod === 'PAYPAL' && order.paypalCaptureId) {
-      paypalRefund = await refundPayPalCapture(order.paypalCaptureId);
-      if (!paypalRefund.ok) {
-        // Don't flip DB state if money refund failed — admin must retry
-        return errorResponse(res, 502, `PayPal refund failed: ${paypalRefund.error}. Order NOT marked refunded.`);
+      gatewayRefund = await refundPayPalCapture(order.paypalCaptureId);
+      if (!gatewayRefund.ok) {
+        return errorResponse(res, 502, `PayPal refund failed: ${gatewayRefund.error}. Order NOT marked refunded.`);
+      }
+    } else if (order.paymentMethod === 'CASHFREE' && order.cashfreeCfPaymentId) {
+      const { refundCashfreePayment } = await import('./cashfree.controller.js');
+      gatewayRefund = await refundCashfreePayment(
+        order.cashfreeOrderId,
+        order.cashfreeCfPaymentId,
+        parseFloat(order.totalAmount)
+      );
+      if (!gatewayRefund.ok) {
+        return errorResponse(res, 502, `Cashfree refund failed: ${gatewayRefund.error}. Order NOT marked refunded.`);
       }
     }
 
@@ -500,7 +510,7 @@ export async function refundOrder(req, res) {
 
     return successResponse(res, 200, 'Order refunded and tracks re-listed', {
       order: { id: order.id, status: 'REFUNDED' },
-      paypalRefund: paypalRefund.skipped ? null : { refundId: paypalRefund.refundId, status: paypalRefund.status },
+      gatewayRefund: gatewayRefund.skipped ? null : { refundId: gatewayRefund.refundId, status: gatewayRefund.status },
       releasedTracks: trackIds.length,
     });
   } catch (err) {

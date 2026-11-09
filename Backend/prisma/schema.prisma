@@ -36,6 +36,11 @@ enum OrderStatus {
   REFUNDED
 }
 
+enum PaymentGateway {
+  PAYPAL
+  CASHFREE
+}
+
 model User {
   id                      String    @id @default(uuid())
   email                   String    @unique
@@ -112,11 +117,17 @@ model Order {
   id                    String      @id @default(uuid())
   buyerId               String      @map("buyer_id")
   totalAmount           Decimal     @db.Decimal(10, 2) @map("total_amount")
+  currency              String      @default("EUR") // EUR for PayPal, INR for Cashfree
   status                OrderStatus @default(PENDING)
   stripePaymentIntentId String?     @unique @map("stripe_payment_intent_id")
   paypalOrderId         String?     @unique @map("paypal_order_id")
   paypalCaptureId       String?     @unique @map("paypal_capture_id")
-  paymentMethod         String?     @map("payment_method")
+  // Cashfree fields
+  cashfreeOrderId       String?     @unique @map("cashfree_order_id")
+  cashfreeCfPaymentId   String?     @map("cashfree_cf_payment_id")
+  exchangeRate          Decimal?    @db.Decimal(10, 4) @map("exchange_rate") // EUR→INR rate at time of purchase
+  paymentMethod         String?     @map("payment_method") // 'PAYPAL' | 'CASHFREE'
+  buyerCountry          String?     @map("buyer_country") // 'IN' or ISO code
   buyerEmail            String?     @map("buyer_email")
   buyerPhone            String?     @map("buyer_phone")
   createdAt             DateTime    @default(now()) @map("created_at")
