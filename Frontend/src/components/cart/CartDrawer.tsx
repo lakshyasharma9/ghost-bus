@@ -7,32 +7,42 @@ import { useEffect, useCallback } from "react";
 
 export function CartDrawer() {
   const cart = useCart();
-  const { user } = useAuthContext();
+  const { user, loading: authLoading } = useAuthContext();
   const navigate = useNavigate();
+
+  // If auth is done loading and user is null (logged out), close the cart drawer
+  useEffect(() => {
+    if (!authLoading && !user && cart.open) {
+      cart.setOpen(false);
+    }
+  }, [authLoading, user, cart.open]);
 
   // Lock body scroll when drawer is open — also prevents background page scroll
   useEffect(() => {
     if (cart.open) {
       const scrollY = window.scrollY;
+      document.body.dataset.scrollY = String(scrollY);
       document.body.style.position = "fixed";
       document.body.style.top = `-${scrollY}px`;
       document.body.style.width = "100%";
       document.body.style.overflowY = "scroll";
     } else {
-      const scrollY = document.body.style.top;
+      const scrollY = document.body.dataset.scrollY || "0";
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.width = "";
       document.body.style.overflowY = "";
-      if (scrollY) {
-        window.scrollTo(0, parseInt(scrollY || "0") * -1);
-      }
+      delete document.body.dataset.scrollY;
+      window.scrollTo(0, parseInt(scrollY) * 1);
     }
     return () => {
+      const scrollY = document.body.dataset.scrollY || "0";
       document.body.style.position = "";
       document.body.style.top = "";
       document.body.style.width = "";
       document.body.style.overflowY = "";
+      delete document.body.dataset.scrollY;
+      window.scrollTo(0, parseInt(scrollY) * 1);
     };
   }, [cart.open]);
 
@@ -97,7 +107,11 @@ export function CartDrawer() {
             </div>
 
             {/* Cart items */}
-            <div className="flex-1 overflow-y-auto px-6 py-5">
+            <div
+              className="flex-1 overflow-y-auto px-6 py-5"
+              style={{ overscrollBehavior: "contain" }}
+              onWheel={(e) => e.stopPropagation()}
+            >
               {cart.items.length === 0 ? (
                 <div className="h-full grid place-items-center text-center">
                   <div>
