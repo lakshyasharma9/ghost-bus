@@ -3,34 +3,57 @@ import { X, ShoppingBag, Trash2, Lock, Shield, Zap, CheckCircle2, ArrowRight } f
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useCart } from "@/store";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 
 export function CartDrawer() {
   const cart = useCart();
   const { user } = useAuthContext();
   const navigate = useNavigate();
 
-  // Lock body scroll when drawer is open
+  // Lock body scroll when drawer is open — also prevents background page scroll
   useEffect(() => {
     if (cart.open) {
-      document.body.style.overflow = "hidden";
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.width = "100%";
+      document.body.style.overflowY = "scroll";
     } else {
-      document.body.style.overflow = "";
+      const scrollY = document.body.style.top;
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overflowY = "";
+      if (scrollY) {
+        window.scrollTo(0, parseInt(scrollY || "0") * -1);
+      }
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.width = "";
+      document.body.style.overflowY = "";
+    };
   }, [cart.open]);
+
+  const closeCart = useCallback(() => {
+    cart.setOpen(false);
+  }, [cart]);
 
   const subtotal   = cart.items.reduce((s, i) => s + i.track.price, 0);
   const serviceFee = Math.round(subtotal * 0.03 * 100) / 100;
   const total      = subtotal + serviceFee;
 
   const handleProceedClick = () => {
-    cart.setOpen(false);
-    if (!user) {
-      navigate({ to: "/login", search: { redirect: "/checkout" } as any });
-    } else {
-      navigate({ to: "/checkout" });
-    }
+    // Close cart drawer first, then navigate after body scroll is restored
+    closeCart();
+    setTimeout(() => {
+      if (!user) {
+        navigate({ to: "/login" as any, search: { redirect: "/checkout" } as any });
+      } else {
+        navigate({ to: "/checkout" as any });
+      }
+    }, 50);
   };
 
   return (
@@ -42,7 +65,7 @@ export function CartDrawer() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => cart.setOpen(false)}
+            onClick={closeCart}
             className="fixed inset-0 z-[70] bg-black/30 backdrop-blur-sm"
           />
 
@@ -66,7 +89,7 @@ export function CartDrawer() {
                 )}
               </div>
               <button
-                onClick={() => cart.setOpen(false)}
+                onClick={closeCart}
                 className="w-9 h-9 grid place-items-center rounded-full hover:bg-muted transition"
               >
                 <X className="w-5 h-5" />
