@@ -3,11 +3,22 @@ import { X, ShoppingBag, Trash2, Lock, Shield, Zap, CheckCircle2, ArrowRight } f
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useCart } from "@/store";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 export function CartDrawer() {
   const cart = useCart();
   const { user } = useAuthContext();
   const navigate = useNavigate();
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    if (cart.open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [cart.open]);
 
   const subtotal   = cart.items.reduce((s, i) => s + i.track.price, 0);
   const serviceFee = Math.round(subtotal * 0.03 * 100) / 100;
